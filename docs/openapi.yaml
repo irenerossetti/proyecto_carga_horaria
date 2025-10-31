@@ -1,0 +1,110 @@
+openapi: 3.0.3
+info:
+  title: Proyecto Carga Horaria - API
+  version: 1.0.0
+  description: Documentación OpenAPI mínima para los Casos de Uso CU01 y CU02 (Login / Logout)
+servers:
+  - url: http://localhost:8000
+paths:
+  /login:
+    get:
+      summary: Mostrar formulario de login (vista Fortify)
+      tags:
+        - Autenticación
+      responses:
+        '200':
+          description: HTML del formulario de login
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      summary: CU01 - Iniciar Sesión (enviar credenciales)
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                remember:
+                  type: boolean
+              required:
+                - email
+                - password
+            example:
+              email: usuario@dominio.com
+              password: contrasena123
+              remember: false
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                remember:
+                  type: string
+            example:
+              email: usuario@dominio.com
+              password: contrasena123
+              remember: on
+      responses:
+        '200':
+          description: Login exitoso — en una app web suele redirigir; en API devuelve datos de sesión
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              example:
+                message: "Authenticated"
+        '302':
+          description: Redirección (login web exitoso)
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              example:
+                message: "Invalid credentials"
+
+  /logout:
+    post:
+      summary: CU02 - Cerrar Sesión (logout web)
+      tags:
+        - Autenticación
+      description: |
+        Fortify implementa logout vía POST a `/logout`. En la aplicación web esto usa la sesión (cookie).
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Cierre de sesión exitoso (sin contenido)
+        '302':
+          description: Redirección tras logout (comportamiento web)
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              example:
+                message: "Unauthenticated"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: laravel_session

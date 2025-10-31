@@ -30,3 +30,13 @@ Route::middleware(['auth'])->group(function () {
         )
         ->name('two-factor.show');
 });
+
+// Ruta para acceder rápidamente a la documentación Swagger UI
+Route::get('/swagger', function () {
+    return redirect('/api/documentation');
+})->name('swagger.ui');
+
+// Servir el archivo YAML directamente (útil para herramientas externas)
+Route::get('/openapi.yaml', function () {
+    return response()->file(base_path('docs/openapi.yaml'));
+});
