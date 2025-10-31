@@ -98,6 +98,624 @@ paths:
               example:
                 message: "Unauthenticated"
 
+  /forgot-password:
+    get:
+      summary: Mostrar formulario para solicitar restablecimiento de contraseña
+      tags:
+        - Autenticación
+      responses:
+        '200':
+          description: HTML del formulario para solicitar el enlace de restablecimiento
+          content:
+            text/html:
+              schema:
+                type: string
+
+    post:
+      summary: CU03 - Solicitar restablecimiento de contraseña (enviar link por email)
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+              required:
+                - email
+            example:
+              email: admin@dominio.com
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+            example:
+              email: admin@dominio.com
+      responses:
+        '200':
+          description: Solicitud aceptada — se enviará un enlace de restablecimiento si el email existe
+          content:
+            application/json:
+              example:
+                message: "If a user with that email exists, a password reset link has been sent."
+        '302':
+          description: Redirección (comportamiento web típico tras solicitar)
+
+  /reset-password:
+    get:
+      summary: Mostrar formulario de restablecimiento (usa token en query string)
+      tags:
+        - Autenticación
+      parameters:
+        - in: query
+          name: token
+          schema:
+            type: string
+          required: true
+          description: Token recibido por email para restablecer la contraseña
+      responses:
+        '200':
+          description: HTML del formulario de restablecimiento de contraseña
+          content:
+            text/html:
+              schema:
+                type: string
+
+    post:
+      summary: Completar restablecimiento de contraseña (enviar nuevo password)
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                password_confirmation:
+                  type: string
+              required:
+                - token
+                - email
+                - password
+                - password_confirmation
+            example:
+              token: "token-aqui"
+              email: admin@dominio.com
+              password: NewPass123!
+              password_confirmation: NewPass123!
+      responses:
+        '200':
+          description: Password restablecida correctamente (API)
+          content:
+            application/json:
+              example:
+                message: "Password reset successfully."
+        '302':
+          description: Redirección tras restablecer (comportamiento web)
+        '400':
+          description: Token inválido o datos inválidos
+          content:
+            application/json:
+              example:
+                message: "Invalid token or data"
+
+  /api/periods:
+    get:
+      summary: CU04 - Listar periodos académicos (Admin)
+      tags:
+        - Periodos Académicos
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de periodos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    status:
+                      type: string
+                    start_date:
+                      type: string
+                      format: date
+                    end_date:
+                      type: string
+                      format: date
+
+    post:
+      summary: CU04 - Crear periodo académico (Admin)
+      tags:
+        - Periodos Académicos
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+              required:
+                - name
+            example:
+              name: "Gestión 2-2025"
+              start_date: "2025-07-01"
+              end_date: "2025-12-31"
+      responses:
+        '201':
+          description: Periodo creado
+          content:
+            application/json:
+              example:
+                id: 1
+                name: "Gestión 2-2025"
+                status: "draft"
+
+  /api/periods/{id}/activate:
+    post:
+      summary: CU04 - Activar periodo académico (Admin)
+      tags:
+        - Periodos Académicos
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del periodo a activar
+      responses:
+        '200':
+          description: Periodo activado
+          content:
+            application/json:
+              example:
+                message: "Period activated"
+                period:
+                  id: 2
+                  name: "Gestión 2-2025"
+                  status: "active"
+        '403':
+          description: Forbidden (no admin)
+
+  /api/periods/{id}/close:
+    post:
+      summary: CU04 - Cerrar periodo académico (Admin)
+      tags:
+        - Periodos Académicos
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del periodo a cerrar
+      responses:
+        '200':
+          description: Periodo cerrado
+          content:
+            application/json:
+              example:
+                message: "Period closed"
+                period:
+                  id: 2
+                  name: "Gestión 2-2025"
+                  status: "closed"
+        '403':
+          description: Forbidden (no admin)
+
+  /api/periods/{id}:
+    patch:
+      summary: CU04 - Actualizar periodo académico (Admin)
+      tags:
+        - Periodos Académicos
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del periodo a actualizar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                status:
+                  type: string
+                  enum: [draft, active, closed]
+            example:
+              name: "Gestión 2-2025 (editado)"
+              start_date: "2025-07-01"
+              end_date: "2025-12-31"
+              status: "draft"
+      responses:
+        '200':
+          description: Periodo actualizado
+          content:
+            application/json:
+              example:
+                message: "Period updated"
+                period:
+                  id: 2
+                  name: "Gestión 2-2025 (editado)"
+                  status: "draft"
+        '422':
+          description: Validación fallida
+
+    delete:
+      summary: CU04 - Eliminar periodo académico (Admin)
+      tags:
+        - Periodos Académicos
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del periodo a eliminar
+      responses:
+        '200':
+          description: Periodo eliminado
+          content:
+            application/json:
+              example:
+                message: "Period deleted"
+                id: 2
+        '403':
+          description: Forbidden (no admin)
+
+  /api/roles:
+    get:
+      summary: CU05 - Listar roles (Admin)
+      tags:
+        - Roles
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de roles
+          content:
+            application/json:
+              example:
+                - administrador
+                - docente
+                - estudiante
+
+    post:
+      summary: CU05 - Crear rol (Admin)
+      tags:
+        - Roles
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+                - name
+            example:
+              name: administrador
+      responses:
+        '201':
+          description: Rol creado
+          content:
+            application/json:
+              example:
+                id: 1
+                name: administrador
+
+  /api/roles/{id}:
+    patch:
+      summary: CU05 - Actualizar rol (Admin)
+      tags:
+        - Roles
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del rol a actualizar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+            example:
+              name: administrador_ed
+      responses:
+        '200':
+          description: Rol actualizado
+          content:
+            application/json:
+              example:
+                id: 1
+                name: administrador_ed
+        '422':
+          description: Validación fallida
+
+    delete:
+      summary: CU05 - Eliminar rol (Admin)
+      tags:
+        - Roles
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del rol a eliminar
+      responses:
+        '200':
+          description: Rol eliminado
+          content:
+            application/json:
+              example:
+                message: "Role deleted"
+                id: 1
+        '409':
+          description: Conflicto - el rol está asignado a usuarios y no puede eliminarse
+          content:
+            application/json:
+              example:
+                message: "Role is assigned to users, cannot delete"
+
+  /api/users/{id}/roles:
+    get:
+      summary: CU05 - Obtener roles de un usuario (Admin)
+      tags:
+        - Roles
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Roles del usuario
+          content:
+            application/json:
+              example:
+                - docente
+
+    post:
+      summary: CU05 - Asignar roles a un usuario (Admin)
+      tags:
+        - Roles
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - roles
+            example:
+              roles: ["docente"]
+      responses:
+        '200':
+          description: Roles asignados
+          content:
+            application/json:
+              example:
+                message: "Roles assigned"
+                roles: ["docente"]
+
+  /api/teachers:
+    get:
+      summary: CU06 - Listar docentes (Admin)
+      tags:
+        - Docentes
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de docentes
+          content:
+            application/json:
+              example:
+                - id: 1
+                  name: "Juan Perez"
+                  email: "juan@uni.edu"
+
+    post:
+      summary: CU06 - Crear docente (Admin)
+      tags:
+        - Docentes
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                dni:
+                  type: string
+                phone:
+                  type: string
+                department:
+                  type: string
+              required:
+                - name
+                - email
+            example:
+              name: "Juan Perez"
+              email: "juan@uni.edu"
+              dni: "12345678"
+      responses:
+        '201':
+          description: Docente creado
+          content:
+            application/json:
+              example:
+                id: 1
+                name: "Juan Perez"
+                email: "juan@uni.edu"
+
+  /api/teachers/{id}:
+    get:
+      summary: CU06 - Obtener docente por id (Admin)
+      tags:
+        - Docentes
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Docente
+          content:
+            application/json:
+              example:
+                id: 1
+                name: "Juan Perez"
+                email: "juan@uni.edu"
+
+    patch:
+      summary: CU06 - Actualizar docente (Admin)
+      tags:
+        - Docentes
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                dni:
+                  type: string
+                phone:
+                  type: string
+                department:
+                  type: string
+            example:
+              name: "Juan Perez (Editado)"
+      responses:
+        '200':
+          description: Docente actualizado
+          content:
+            application/json:
+              example:
+                id: 1
+                name: "Juan Perez (Editado)"
+
+    delete:
+      summary: CU06 - Eliminar docente (Admin)
+      tags:
+        - Docentes
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Docente eliminado
+          content:
+            application/json:
+              example:
+                message: "Teacher deleted"
+                id: 1
+
 components:
   securitySchemes:
     bearerAuth:
