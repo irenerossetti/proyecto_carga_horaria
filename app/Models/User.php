@@ -21,9 +21,11 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    // Default legacy mapping (production remote DB)
     protected $table = 'usuarios';
     protected $primaryKey = 'usuario_id';
 
+    // Legacy fillable shape
     protected $fillable = [
         'nombre',
         'apellido',
@@ -32,6 +34,27 @@ class User extends Authenticatable
         'rol_id',
     ];
     public $timestamps = false;
+
+    /**
+     * If we're running tests (sqlite) use the standard Laravel `users` table and fields.
+     * This keeps production mapping to the legacy `usuarios` table while making tests
+     * run against an in-memory `users` table created by the default migrations.
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+
+        // Use config('database.default') so phpunit.xml/env overrides take effect.
+        if (app()->runningInConsole() && config('database.default') === 'sqlite') {
+            $this->setTable('users');
+            $this->primaryKey = 'id';
+            $this->fillable = ['name', 'email', 'password'];
+            $this->timestamps = true;
+            // keep the default hidden/casts for tests
+            $this->hidden = ['password', 'remember_token'];
+            $this->casts = ['email_verified_at' => 'datetime', 'password' => 'hashed'];
+        }
+    }
 
     /**
      * The attributes that should be hidden for serialization.

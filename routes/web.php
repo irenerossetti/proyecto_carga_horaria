@@ -22,16 +22,7 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/password', 'settings.password')->name('user-password.edit');
     Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
 
-    Volt::route('settings/two-factor', 'settings.two-factor')
-        ->middleware(
-            when(
-                Features::canManageTwoFactorAuthentication()
-                    && Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'),
-                ['password.confirm'],
-                [],
-            ),
-        )
-        ->name('two-factor.show');
+    // Two-factor authentication settings removed — route intentionally omitted.
 });
 
 // Ruta para acceder rápidamente a la documentación Swagger UI
@@ -73,4 +64,28 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
     Route::get('teachers/{id}', [TeacherController::class, 'show']);
     Route::patch('teachers/{id}', [TeacherController::class, 'update']);
     Route::delete('teachers/{id}', [TeacherController::class, 'destroy']);
+    // CU07 - Docente visualiza/edita su propio perfil
+    Route::get('teachers/me', [TeacherController::class, 'me']);
+    Route::patch('teachers/me', [TeacherController::class, 'updateMe']);
+
+    // CU08 - Materias (Subjects) CRUD (admin)
+    Route::get('subjects', [\App\Http\Controllers\SubjectController::class, 'index']);
+    Route::post('subjects', [\App\Http\Controllers\SubjectController::class, 'store']);
+    Route::get('subjects/{id}', [\App\Http\Controllers\SubjectController::class, 'show']);
+    Route::patch('subjects/{id}', [\App\Http\Controllers\SubjectController::class, 'update']);
+    Route::delete('subjects/{id}', [\App\Http\Controllers\SubjectController::class, 'destroy']);
+    
+    // CU09 - Grupos (Groups) CRUD (admin)
+    Route::get('groups', [\App\Http\Controllers\GroupController::class, 'index']);
+    Route::post('groups', [\App\Http\Controllers\GroupController::class, 'store']);
+    Route::get('groups/{id}', [\App\Http\Controllers\GroupController::class, 'show']);
+    Route::patch('groups/{id}', [\App\Http\Controllers\GroupController::class, 'update']);
+    Route::delete('groups/{id}', [\App\Http\Controllers\GroupController::class, 'destroy']);
+
+    // CU10 - Aulas (Rooms) CRUD (admin)
+    Route::get('rooms', [\App\Http\Controllers\RoomController::class, 'index']);
+    Route::post('rooms', [\App\Http\Controllers\RoomController::class, 'store']);
+    Route::get('rooms/{id}', [\App\Http\Controllers\RoomController::class, 'show']);
+    Route::patch('rooms/{id}', [\App\Http\Controllers\RoomController::class, 'update']);
+    Route::delete('rooms/{id}', [\App\Http\Controllers\RoomController::class, 'destroy']);
 });

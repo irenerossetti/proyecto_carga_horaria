@@ -47,6 +47,46 @@ class TeacherController extends Controller
         return response()->json($t);
     }
 
+    // CU07 - Docente visualiza su propio perfil
+    public function me()
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $teacher = Teacher::where('email', $user->email)->first();
+        if (!$teacher) {
+            return response()->json(['message' => 'Teacher profile not found'], 404);
+        }
+
+        return response()->json($teacher);
+    }
+
+    // CU07 - Docente edita su propio perfil
+    public function updateMe(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $teacher = Teacher::where('email', $user->email)->firstOrFail();
+
+        $data = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|unique:teachers,email,' . $teacher->id,
+            'dni' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'department' => 'nullable|string',
+        ]);
+
+        $teacher->fill($data);
+        $teacher->save();
+
+        return response()->json($teacher);
+    }
+
     public function update(Request $request, $id)
     {
         $this->ensureAdmin();

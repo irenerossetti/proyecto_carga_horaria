@@ -716,6 +716,479 @@ paths:
                 message: "Teacher deleted"
                 id: 1
 
+  /api/teachers/me:
+    get:
+      summary: CU07 - Ver perfil del docente autenticado
+      tags:
+        - Docentes
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Perfil del docente
+          content:
+            application/json:
+              example:
+                id: 1
+                name: "Juan Perez"
+                email: "juan@uni.edu"
+        '401':
+          description: No autenticado
+    patch:
+      summary: CU07 - Editar perfil del docente autenticado
+      tags:
+        - Docentes
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                dni:
+                  type: string
+                phone:
+                  type: string
+                department:
+                  type: string
+            example:
+              name: "Juan Perez (Editado)"
+      responses:
+        '200':
+          description: Perfil actualizado
+          content:
+            application/json:
+              example:
+                id: 1
+                name: "Juan Perez (Editado)"
+        '422':
+          description: Validación fallida
+
+  /api/subjects:
+    get:
+      summary: CU08 - Listar materias (Admin)
+      tags:
+        - Materias
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de materias
+          content:
+            application/json:
+              example:
+                - id: 1
+                  code: "MAT101"
+                  name: "Matemáticas I"
+
+    post:
+      summary: CU08 - Crear materia (Admin)
+      tags:
+        - Materias
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+                credits:
+                  type: integer
+                description:
+                  type: string
+              required:
+                - code
+                - name
+            example:
+              code: "MAT101"
+              name: "Matemáticas I"
+              credits: 4
+      responses:
+        '201':
+          description: Materia creada
+          content:
+            application/json:
+              example:
+                id: 1
+                code: "MAT101"
+                name: "Matemáticas I"
+
+  /api/subjects/{id}:
+    get:
+      summary: CU08 - Obtener materia por id (Admin)
+      tags:
+        - Materias
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Materia
+          content:
+            application/json:
+              example:
+                id: 1
+                code: "MAT101"
+                name: "Matemáticas I"
+
+    patch:
+      summary: CU08 - Actualizar materia (Admin)
+      tags:
+        - Materias
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+                credits:
+                  type: integer
+                description:
+                  type: string
+            example:
+              name: "Matemáticas I (Editado)"
+      responses:
+        '200':
+          description: Materia actualizada
+          content:
+            application/json:
+              example:
+                id: 1
+                code: "MAT101"
+                name: "Matemáticas I (Editado)"
+
+    delete:
+      summary: CU08 - Eliminar materia (Admin)
+      tags:
+        - Materias
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Materia eliminada
+          content:
+            application/json:
+              example:
+                message: "Subject deleted"
+                id: 1
+
+  /api/groups:
+    get:
+      summary: CU09 - Listar grupos (Admin)
+      tags:
+        - Grupos
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de grupos
+          content:
+            application/json:
+              example:
+                - id: 1
+                  subject_id: 1
+                  code: "G1"
+                  name: "Grupo 1"
+
+    post:
+      summary: CU09 - Crear grupo (Admin)
+      tags:
+        - Grupos
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject_id:
+                  type: integer
+                code:
+                  type: string
+                name:
+                  type: string
+                capacity:
+                  type: integer
+                schedule:
+                  type: string
+              required:
+                - subject_id
+                - code
+                - name
+            example:
+              subject_id: 1
+              code: "G1"
+              name: "Grupo 1"
+              capacity: 30
+      responses:
+        '201':
+          description: Grupo creado
+          content:
+            application/json:
+              example:
+                id: 1
+                subject_id: 1
+                code: "G1"
+                name: "Grupo 1"
+
+  /api/groups/{id}:
+    get:
+      summary: CU09 - Obtener grupo por id (Admin)
+      tags:
+        - Grupos
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Grupo
+          content:
+            application/json:
+              example:
+                id: 1
+                subject_id: 1
+                code: "G1"
+                name: "Grupo 1"
+
+    patch:
+      summary: CU09 - Actualizar grupo (Admin)
+      tags:
+        - Grupos
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject_id:
+                  type: integer
+                code:
+                  type: string
+                name:
+                  type: string
+                capacity:
+                  type: integer
+                schedule:
+                  type: string
+            example:
+              name: "Grupo 1 (Editado)"
+      responses:
+        '200':
+          description: Grupo actualizado
+          content:
+            application/json:
+              example:
+                id: 1
+                name: "Grupo 1 (Editado)"
+
+    delete:
+      summary: CU09 - Eliminar grupo (Admin)
+      tags:
+        - Grupos
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Grupo eliminado
+          content:
+            application/json:
+              example:
+                message: "Group deleted"
+                id: 1
+
+  /api/rooms:
+    get:
+      summary: CU10 - Listar aulas (Admin)
+      tags:
+        - Aulas
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de aulas
+          content:
+            application/json:
+              example:
+                - id: 1
+                  name: "Aula 101"
+                  capacity: 40
+
+    post:
+      summary: CU10 - Crear aula (Admin)
+      tags:
+        - Aulas
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                capacity:
+                  type: integer
+                location:
+                  type: string
+                resources:
+                  type: string
+              required:
+                - name
+            example:
+              name: "Aula 101"
+              capacity: 40
+      responses:
+        '201':
+          description: Aula creada
+          content:
+            application/json:
+              example:
+                id: 1
+                name: "Aula 101"
+                capacity: 40
+
+  /api/rooms/{id}:
+    get:
+      summary: CU10 - Obtener aula por id (Admin)
+      tags:
+        - Aulas
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Aula
+          content:
+            application/json:
+              example:
+                id: 1
+                name: "Aula 101"
+                capacity: 40
+
+    patch:
+      summary: CU10 - Actualizar aula (Admin)
+      tags:
+        - Aulas
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                capacity:
+                  type: integer
+                location:
+                  type: string
+                resources:
+                  type: string
+            example:
+              name: "Aula 101 (Editado)"
+      responses:
+        '200':
+          description: Aula actualizada
+          content:
+            application/json:
+              example:
+                id: 1
+                name: "Aula 101 (Editado)"
+
+    delete:
+      summary: CU10 - Eliminar aula (Admin)
+      tags:
+        - Aulas
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Aula eliminada
+          content:
+            application/json:
+              example:
+                message: "Room deleted"
+                id: 1
+
 components:
   securitySchemes:
     bearerAuth:

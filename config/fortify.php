@@ -116,7 +116,6 @@ return [
 
     'limiters' => [
         'login' => 'login',
-        'two-factor' => 'two-factor',
     ],
 
     /*
@@ -143,17 +142,24 @@ return [
     |
     */
 
-    'features' => [
-        Features::registration(),
-        Features::resetPasswords(),
-        Features::emailVerification(),
-        // Features::updateProfileInformation(),
-        // Features::updatePasswords(),
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-            // 'window' => 0,
-        ]),
-    ],
+    'features' => (function () {
+        $base = [
+            Features::registration(),
+            Features::resetPasswords(),
+            Features::emailVerification(),
+            // Features::updateProfileInformation(),
+            // Features::updatePasswords(),
+        ];
+
+        // Non-destructive toggle: enable two-factor only when explicitly requested.
+        if (env('ENABLE_TWO_FACTOR', false)) {
+            $base[] = Features::twoFactorAuthentication([
+                'confirm' => true,
+                'confirmPassword' => true,
+            ]);
+        }
+
+        return $base;
+    })(),
 
 ];
