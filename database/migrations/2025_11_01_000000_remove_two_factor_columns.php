@@ -7,10 +7,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Disable wrapping this migration in a transaction.
-     * This helps when the DB connection has a prior aborted transaction.
+     * Note: previously executed outside transaction to address an aborted transaction state during deploy.
      */
-    public $withinTransaction = false;
 
     /**
      * Run the migrations.

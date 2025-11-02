@@ -88,4 +88,10 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
     Route::get('rooms/{id}', [\App\Http\Controllers\RoomController::class, 'show']);
     Route::patch('rooms/{id}', [\App\Http\Controllers\RoomController::class, 'update']);
     Route::delete('rooms/{id}', [\App\Http\Controllers\RoomController::class, 'destroy']);
+    // CU11 - Equipamiento de aulas
+    Route::get('rooms/{id}/equipment', [\App\Http\Controllers\RoomController::class, 'equipment']);
+    Route::put('rooms/{id}/equipment', [\App\Http\Controllers\RoomController::class, 'updateEquipment']);
+
+    // CU12 - Importar datos masivos (CSV)
+    Route::post('imports', [\App\Http\Controllers\ImportController::class, 'import']);
 });

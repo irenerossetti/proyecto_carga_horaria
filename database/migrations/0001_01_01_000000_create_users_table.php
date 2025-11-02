@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
+     * Default transactional migration (previously a workaround was used during deploy).
+     */
+    /**
      * Run the migrations.
      */
     public function up(): void

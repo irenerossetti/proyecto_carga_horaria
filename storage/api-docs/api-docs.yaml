@@ -1189,6 +1189,105 @@ paths:
                 message: "Room deleted"
                 id: 1
 
+  /api/rooms/{id}/equipment:
+    get:
+      summary: CU11 - Obtener equipamiento de un aula (Admin)
+      tags:
+        - Aulas
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Equipamiento del aula
+          content:
+            application/json:
+              example:
+                id: 1
+                equipment:
+                  projector: true
+                  capacity: 40
+                  air_conditioning: true
+
+    put:
+      summary: CU11 - Definir/Actualizar equipamiento del aula (Admin)
+      tags:
+        - Aulas
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                equipment:
+                  type: object
+            example:
+              equipment:
+                projector: true
+                capacity: 40
+                air_conditioning: true
+      responses:
+        '200':
+          description: Equipamiento actualizado
+          content:
+            application/json:
+              example:
+                id: 1
+                equipment:
+                  projector: true
+                  capacity: 40
+                  air_conditioning: true
+
+  /api/imports:
+    post:
+      summary: "CU12 - Cargar datos masivos (CSV): docentes, materias o grupos (Admin)"
+      tags:
+        - Import
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [teachers, subjects, groups]
+                file:
+                  type: string
+                  format: binary
+              required:
+                - type
+                - file
+            encoding:
+              file:
+                contentType: text/csv
+      responses:
+        '200':
+          description: Resultado de la importación
+          content:
+            application/json:
+              example:
+                created: 10
+                updated: 2
+                errors: []
+
 components:
   securitySchemes:
     bearerAuth:

@@ -45,6 +45,15 @@ class RoomController extends Controller
         return response()->json(Room::findOrFail($id));
     }
 
+    // CU11 - Obtener equipamiento del aula
+    public function equipment($id)
+    {
+        $this->ensureAdmin();
+        $room = Room::findOrFail($id);
+        $resources = $room->resources ? json_decode($room->resources, true) : [];
+        return response()->json(['equipment' => $resources]);
+    }
+
     public function update(Request $request, $id)
     {
         $this->ensureAdmin();
@@ -61,6 +70,22 @@ class RoomController extends Controller
         $room->save();
 
         return response()->json($room);
+    }
+
+    // CU11 - Actualizar equipamiento del aula (sustituye/setea JSON)
+    public function updateEquipment(Request $request, $id)
+    {
+        $this->ensureAdmin();
+        $room = Room::findOrFail($id);
+
+        $data = $request->validate([
+            'equipment' => 'required|array',
+        ]);
+
+        $room->resources = json_encode($data['equipment']);
+        $room->save();
+
+        return response()->json(['id' => $room->id, 'equipment' => $data['equipment']]);
     }
 
     public function destroy($id)

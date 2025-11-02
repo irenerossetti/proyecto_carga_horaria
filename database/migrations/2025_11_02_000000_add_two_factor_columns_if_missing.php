@@ -7,9 +7,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run migration outside a transaction to avoid issues with prior aborted transactions.
+     * Note: previously executed outside transaction to address an aborted transaction state during deploy.
      */
-    public $withinTransaction = false;
     /**
      * Run the migrations.
      */
