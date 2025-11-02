@@ -1288,6 +1288,638 @@ paths:
                 updated: 2
                 errors: []
 
+    /api/teachers/{id}/assignments:
+      get:
+        summary: CU13 - Listar asignaciones de carga horaria de un docente (Admin)
+        tags:
+          - Carga Horaria
+        security:
+          - cookieAuth: []
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            required: true
+            description: ID del docente
+        responses:
+          '200':
+            description: Lista de asignaciones del docente
+            content:
+              application/json:
+                example:
+                  - id: 1
+                    teacher_id: 1
+                    subject_id: 2
+                    group_id: 3
+                    period_id: 1
+
+    /api/assignments:
+      get:
+        summary: CU13 - Listar todas las asignaciones (Admin)
+        tags:
+          - Carga Horaria
+        security:
+          - cookieAuth: []
+        parameters:
+          - in: query
+            name: teacher_id
+            schema:
+              type: integer
+          - in: query
+            name: period_id
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: Lista de asignaciones
+            content:
+              application/json:
+                example:
+                  - id: 1
+                    teacher_id: 1
+                    subject_id: 2
+                    group_id: 3
+                    period_id: 1
+
+      post:
+        summary: CU13 - Crear asignación de carga horaria (Admin)
+        tags:
+          - Carga Horaria
+        security:
+          - cookieAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  teacher_id:
+                    type: integer
+                  subject_id:
+                    type: integer
+                  group_id:
+                    type: integer
+                  period_id:
+                    type: integer
+                required:
+                  - teacher_id
+              example:
+                teacher_id: 1
+                subject_id: 2
+                group_id: 3
+                period_id: 1
+        responses:
+          '201':
+            description: Asignación creada
+            content:
+              application/json:
+                example:
+                  id: 1
+                  teacher_id: 1
+                  subject_id: 2
+                  group_id: 3
+                  period_id: 1
+
+    /api/assignments/{id}:
+      get:
+        summary: CU13 - Obtener asignación por id (Admin)
+        tags:
+          - Carga Horaria
+        security:
+          - cookieAuth: []
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            required: true
+        responses:
+          '200':
+            description: Asignación
+            content:
+              application/json:
+                example:
+                  id: 1
+                  teacher_id: 1
+                  subject_id: 2
+                  group_id: 3
+                  period_id: 1
+
+      patch:
+        summary: CU13 - Actualizar asignación (Admin)
+        tags:
+          - Carga Horaria
+        security:
+          - cookieAuth: []
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            required: true
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subject_id:
+                    type: integer
+                  group_id:
+                    type: integer
+                  period_id:
+                    type: integer
+              example:
+                subject_id: 2
+                group_id: 3
+        responses:
+          '200':
+            description: Asignación actualizada
+            content:
+              application/json:
+                example:
+                  id: 1
+                  teacher_id: 1
+                  subject_id: 2
+                  group_id: 3
+                  period_id: 1
+
+      delete:
+        summary: CU13 - Eliminar asignación (Admin)
+        tags:
+          - Carga Horaria
+        security:
+          - cookieAuth: []
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            required: true
+        responses:
+          '200':
+            description: Asignación eliminada
+            content:
+              application/json:
+                example:
+                  message: "Assignment deleted"
+                  id: 1
+
+    /api/schedules:
+      get:
+        summary: CU14 - Listar horarios (Admin)
+        tags:
+          - Horarios
+        security:
+          - cookieAuth: []
+        parameters:
+          - in: query
+            name: group_id
+            schema:
+              type: integer
+          - in: query
+            name: teacher_id
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: Lista de horarios
+            content:
+              application/json:
+                example:
+                  - id: 1
+                    group_id: 3
+                    room_id: 5
+                    teacher_id: 1
+                    day_of_week: monday
+                    start_time: "08:00"
+                    end_time: "10:00"
+
+      post:
+        summary: CU14 - Crear horario (Admin)
+        tags:
+          - Horarios
+        security:
+          - cookieAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  group_id:
+                    type: integer
+                  room_id:
+                    type: integer
+                  teacher_id:
+                    type: integer
+                  day_of_week:
+                    type: string
+                  start_time:
+                    type: string
+                    format: time
+                  end_time:
+                    type: string
+                    format: time
+                required:
+                  - group_id
+                  - day_of_week
+                  - start_time
+                  - end_time
+              example:
+                group_id: 3
+                room_id: 5
+                teacher_id: 1
+                day_of_week: monday
+                start_time: "08:00"
+                end_time: "10:00"
+        responses:
+          '201':
+            description: Horario creado
+            content:
+              application/json:
+                example:
+                  id: 1
+                  group_id: 3
+                  room_id: 5
+                  teacher_id: 1
+                  day_of_week: monday
+                  start_time: "08:00"
+                  end_time: "10:00"
+
+      /api/schedules/generate:
+        post:
+          summary: CU15 - Generar horario automáticamente (Admin)
+          tags:
+            - Horarios
+          security:
+            - cookieAuth: []
+          requestBody:
+            required: false
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    period_id:
+                      type: integer
+                example:
+                  period_id: 1
+          responses:
+            '200':
+              description: Resultado de la generación
+              content:
+                application/json:
+                  example:
+                    created: 10
+                    schedules: []
+
+      /api/schedules/export:
+        get:
+          summary: Exportar horarios a Excel (Docente/Admin)
+          tags:
+            - Horarios
+          security:
+            - cookieAuth: []
+          parameters:
+            - in: query
+              name: teacher_id
+              schema:
+                type: integer
+            - in: query
+              name: group_id
+              schema:
+                type: integer
+          responses:
+            '200':
+              description: Archivo XLSX con horarios
+              content:
+                application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+                  schema:
+                    type: string
+                    format: binary
+
+          /api/schedules/export.pdf:
+            get:
+              summary: Exportar horarios a PDF (Docente/Admin)
+              tags:
+                - Horarios
+              security:
+                - cookieAuth: []
+              parameters:
+                - in: query
+                  name: teacher_id
+                  schema:
+                    type: integer
+                - in: query
+                  name: group_id
+                  schema:
+                    type: integer
+              responses:
+                '200':
+                  description: Archivo PDF con horarios
+                  content:
+                    application/pdf:
+                      schema:
+                        type: string
+                        format: binary
+                '501':
+                  description: PDF export no disponible (dependencia faltante)
+                  content:
+                    application/json:
+                      example:
+                        message: "PDF export not available. Please install barryvdh/laravel-dompdf"
+
+      /api/schedules/weekly:
+        get:
+          summary: CU16 - Visualizar horario semanal (Docente / Admin)
+          tags:
+            - Horarios
+          security:
+            - cookieAuth: []
+          parameters:
+            - in: query
+              name: teacher_id
+              schema:
+                type: integer
+            - in: query
+              name: group_id
+              schema:
+                type: integer
+          responses:
+            '200':
+              description: Horario semanal agrupado por día
+              content:
+                application/json:
+                  example:
+                    monday:
+                      - id: 1
+                        group_id: 3
+                        room_id: 5
+                        teacher_id: 1
+                        start_time: "08:00"
+                        end_time: "10:00"
+
+      /api/attendances:
+        get:
+          summary: CU17 - Listar asistencias (Docente/Admin)
+          tags:
+            - Asistencias
+          security:
+            - cookieAuth: []
+          parameters:
+            - in: query
+              name: teacher_id
+              schema:
+                type: integer
+            - in: query
+              name: date
+              schema:
+                type: string
+                format: date
+          responses:
+            '200':
+              description: Lista de registros de asistencia
+              content:
+                application/json:
+                  example:
+                    - id: 1
+                      teacher_id: 1
+                      date: "2025-11-02"
+                      time: "08:05"
+                      status: present
+
+        post:
+          summary: CU17 - Registrar asistencia docente (Docente/Admin)
+          tags:
+            - Asistencias
+          security:
+            - cookieAuth: []
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    teacher_id:
+                      type: integer
+                    schedule_id:
+                      type: integer
+                    date:
+                      type: string
+                      format: date
+                    time:
+                      type: string
+                      format: time
+                    status:
+                      type: string
+                      enum: [present,absent,late]
+                    notes:
+                      type: string
+                  required:
+                    - teacher_id
+                    - date
+                    - status
+                example:
+                  teacher_id: 1
+                  date: "2025-11-02"
+                  time: "08:05"
+                  status: present
+          responses:
+            '201':
+              description: Registro creado
+              content:
+                application/json:
+                  example:
+                    id: 1
+                    teacher_id: 1
+                    date: "2025-11-02"
+                    time: "08:05"
+                    status: present
+
+      /api/attendances/{id}:
+        get:
+          summary: CU17 - Obtener registro de asistencia (Docente/Admin)
+          tags:
+            - Asistencias
+          security:
+            - cookieAuth: []
+          parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              required: true
+          responses:
+            '200':
+              description: Registro
+              content:
+                application/json:
+                  example:
+                    id: 1
+                    teacher_id: 1
+                    date: "2025-11-02"
+                    time: "08:05"
+                    status: present
+
+        patch:
+          summary: CU17 - Actualizar registro de asistencia (Docente/Admin)
+          tags:
+            - Asistencias
+          security:
+            - cookieAuth: []
+          parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              required: true
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      enum: [present,absent,late]
+                    notes:
+                      type: string
+          responses:
+            '200':
+              description: Registro actualizado
+              content:
+                application/json:
+                  example:
+                    id: 1
+                    teacher_id: 1
+                    date: "2025-11-02"
+                    time: "08:05"
+                    status: present
+
+        delete:
+          summary: CU17 - Eliminar registro de asistencia (Admin)
+          tags:
+            - Asistencias
+          security:
+            - cookieAuth: []
+          parameters:
+            - in: path
+              name: id
+              schema:
+                type: integer
+              required: true
+          responses:
+            '200':
+              description: Registro eliminado
+              content:
+                application/json:
+                  example:
+                    message: "Attendance deleted"
+                    id: 1
+
+    /api/schedules/{id}:
+      get:
+        summary: CU14 - Obtener horario por id (Admin)
+        tags:
+          - Horarios
+        security:
+          - cookieAuth: []
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            required: true
+        responses:
+          '200':
+            description: Horario
+            content:
+              application/json:
+                example:
+                  id: 1
+                  group_id: 3
+                  room_id: 5
+                  teacher_id: 1
+                  day_of_week: monday
+                  start_time: "08:00"
+                  end_time: "10:00"
+
+      patch:
+        summary: CU14 - Actualizar horario (Admin)
+        tags:
+          - Horarios
+        security:
+          - cookieAuth: []
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            required: true
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  group_id:
+                    type: integer
+                  room_id:
+                    type: integer
+                  teacher_id:
+                    type: integer
+                  day_of_week:
+                    type: string
+                  start_time:
+                    type: string
+                    format: time
+                  end_time:
+                    type: string
+                    format: time
+        responses:
+          '200':
+            description: Horario actualizado
+            content:
+              application/json:
+                example:
+                  id: 1
+                  group_id: 3
+                  room_id: 5
+                  teacher_id: 1
+                  day_of_week: monday
+                  start_time: "08:00"
+                  end_time: "10:00"
+
+      delete:
+        summary: CU14 - Eliminar horario (Admin)
+        tags:
+          - Horarios
+        security:
+          - cookieAuth: []
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: integer
+            required: true
+        responses:
+          '200':
+            description: Horario eliminado
+            content:
+              application/json:
+                example:
+                  message: "Schedule deleted"
+                  id: 1
+
+
 components:
   securitySchemes:
     bearerAuth:

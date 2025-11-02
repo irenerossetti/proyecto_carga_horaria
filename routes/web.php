@@ -94,4 +94,34 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
 
     // CU12 - Importar datos masivos (CSV)
     Route::post('imports', [\App\Http\Controllers\ImportController::class, 'import']);
+
+    // CU13 - Asignar carga horaria a docente (CRUD)
+    Route::get('teachers/{id}/assignments', [\App\Http\Controllers\TeacherAssignmentController::class, 'index']);
+    Route::post('teachers/{id}/assignments', [\App\Http\Controllers\TeacherAssignmentController::class, 'store']);
+    Route::get('assignments', [\App\Http\Controllers\TeacherAssignmentController::class, 'index']);
+    Route::get('assignments/{id}', [\App\Http\Controllers\TeacherAssignmentController::class, 'show']);
+    Route::patch('assignments/{id}', [\App\Http\Controllers\TeacherAssignmentController::class, 'update']);
+    Route::delete('assignments/{id}', [\App\Http\Controllers\TeacherAssignmentController::class, 'destroy']);
+
+    // CU14 - Asignar horarios manual (CRUD) con validación de conflictos
+    Route::get('schedules', [\App\Http\Controllers\ScheduleController::class, 'index']);
+    Route::post('schedules', [\App\Http\Controllers\ScheduleController::class, 'store']);
+    Route::get('schedules/{id}', [\App\Http\Controllers\ScheduleController::class, 'show']);
+    Route::patch('schedules/{id}', [\App\Http\Controllers\ScheduleController::class, 'update']);
+    Route::delete('schedules/{id}', [\App\Http\Controllers\ScheduleController::class, 'destroy']);
+    // CU15 - Generar horario automáticamente
+    Route::post('schedules/generate', [\App\Http\Controllers\ScheduleGeneratorController::class, 'generate'])->middleware('ensure.admin');
+
+    // CU16 - Visualizar horario semanal (por docente o por grupo)
+    Route::get('schedules/weekly', [\App\Http\Controllers\ScheduleController::class, 'weekly'])->middleware('ensure.teacher_or_admin');
+    Route::get('schedules/export', [\App\Http\Controllers\ScheduleController::class, 'export'])->middleware('ensure.teacher_or_admin');
+    // Export PDF
+    Route::get('schedules/export.pdf', [\App\Http\Controllers\ScheduleController::class, 'exportPdf'])->middleware('ensure.teacher_or_admin');
+
+    // CU17 - Registrar asistencia docente (CRUD)
+    Route::get('attendances', [\App\Http\Controllers\AttendanceController::class, 'index'])->middleware('ensure.teacher_or_admin');
+    Route::post('attendances', [\App\Http\Controllers\AttendanceController::class, 'store'])->middleware('ensure.teacher_or_admin');
+    Route::get('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'show'])->middleware('ensure.teacher_or_admin');
+    Route::patch('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'update'])->middleware('ensure.teacher_or_admin');
+    Route::delete('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'destroy'])->middleware('ensure.admin');
 });

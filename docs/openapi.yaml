@@ -1288,6 +1288,37 @@ paths:
                 updated: 2
                 errors: []
 
+  /api/schedules/export.pdf:
+    get:
+      summary: Exportar horarios a PDF (Docente/Admin)
+      tags:
+        - Horarios
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: teacher_id
+          schema:
+            type: integer
+        - in: query
+          name: group_id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Archivo PDF con horarios
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '501':
+          description: PDF export no disponible (dependencia faltante)
+          content:
+            application/json:
+              example:
+                message: "PDF export not available. Please install barryvdh/laravel-dompdf"
+
 components:
   securitySchemes:
     bearerAuth:
