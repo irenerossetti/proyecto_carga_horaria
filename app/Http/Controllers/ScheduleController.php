@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Endroid\QrCode\Builder\Builder;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ScheduleController extends Controller
@@ -306,5 +307,84 @@ class ScheduleController extends Controller
         $schedule = Schedule::findOrFail($id);
         $schedule->delete();
         return response()->json(['message' => 'Schedule deleted', 'id' => (int)$id]);
+    }
+
+    /**
+     * CU19 - Cancel a class or mark it as virtual. Creates a cancellation record.
+     * Body: { mode: 'cancelled'|'virtual', reason?: string }
+     */
+    public function cancel(Request $request, $id)
+    {
+        $schedule = Schedule::findOrFail($id);
+
+        $data = $request->validate([
+            'mode' => 'required|string|in:cancelled,virtual',
+            'reason' => 'nullable|string',
+        ]);
+
+        $user = $request->user();
+
+        // Only admin or the assigned teacher may cancel
+        if (! $user->hasRole('administrador')) {
+            $teacher = $schedule->teacher;
+            if (! $teacher || $teacher->email !== $user->email) {
+                return response()->json(['message' => 'Forbidden - only assigned teacher or admin can cancel this class'], 403);
+            }
+        }
+
+        // Create a cancellation record (class_cancellations table)
+        $c = \App\Models\ClassCancellation::create([
+            'schedule_id' => $schedule->id,
+            'teacher_id' => $schedule->teacher_id,
+            'mode' => $data['mode'],
+            'reason' => $data['reason'] ?? null,
+            'canceled_by' => $user->id,
+        ]);
+
+        return response()->json(['message' => 'Class cancelled', 'cancellation' => $c], 201);
+    }
+
+    /**
+     * Generate a signed QR for a schedule which can be scanned to register attendance.
+     * Only the assigned teacher or an admin may generate the QR for that schedule.
+     * Returns a PNG image with a short-lived signed token payload.
+     */
+    public function generateQr(Request $request, $id)
+    {
+        $schedule = Schedule::with('teacher')->findOrFail($id);
+
+        $user = $request->user();
+        if (! $user->hasRole('administrador')) {
+            // only assigned teacher or admin
+            $teacher = $schedule->teacher;
+            if (! $teacher || $teacher->email !== $user->email) {
+                return response()->json(['message' => 'Forbidden - only assigned teacher or admin can generate this QR'], 403);
+            }
+        }
+
+        $ttl = (int) env('QR_TTL_SECONDS', 300);
+        $payload = [
+            'schedule_id' => $schedule->id,
+            'iat' => time(),
+            'exp' => time() + $ttl,
+            'iss' => env('APP_NAME', 'carga_horaria'),
+        ];
+
+        $payloadJson = json_encode($payload);
+        // url-safe base64
+        $payloadB64 = rtrim(strtr(base64_encode($payloadJson), '+/', '-_'), '=');
+        $secret = env('QR_SECRET', 'CHANGE_ME');
+        $sig = hash_hmac('sha256', $payloadB64, $secret);
+        $token = $payloadB64 . '.' . $sig;
+
+        // Build PNG using endroid/qr-code
+        $result = Builder::create()
+            ->data($token)
+            ->size(300)
+            ->margin(10)
+            ->build();
+
+        $png = $result->getString();
+        return response($png, 200, ['Content-Type' => $result->getMimeType()]);
     }
 }

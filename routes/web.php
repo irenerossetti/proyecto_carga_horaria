@@ -117,10 +117,20 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
     Route::get('schedules/export', [\App\Http\Controllers\ScheduleController::class, 'export'])->middleware('ensure.teacher_or_admin');
     // Export PDF
     Route::get('schedules/export.pdf', [\App\Http\Controllers\ScheduleController::class, 'exportPdf'])->middleware('ensure.teacher_or_admin');
+    // CU18b - Generate signed QR for a schedule (teacher/admin). Returns PNG
+    Route::get('schedules/{id}/qrcode', [\App\Http\Controllers\ScheduleController::class, 'generateQr'])->middleware('ensure.teacher_or_admin');
+    // CU19 - Anular clase / cambiar a virtual (Docente/Admin)
+    Route::post('schedules/{id}/cancel', [\App\Http\Controllers\ScheduleController::class, 'cancel'])->middleware('ensure.teacher_or_admin');
+    // CU19 - Listar/consultar anulaciones
+    Route::get('cancellations', [\App\Http\Controllers\ClassCancellationController::class, 'index'])->middleware('ensure.teacher_or_admin');
+    Route::get('cancellations/{id}', [\App\Http\Controllers\ClassCancellationController::class, 'show'])->middleware('ensure.teacher_or_admin');
+    Route::delete('cancellations/{id}', [\App\Http\Controllers\ClassCancellationController::class, 'destroy'])->middleware('ensure.admin');
 
     // CU17 - Registrar asistencia docente (CRUD)
     Route::get('attendances', [\App\Http\Controllers\AttendanceController::class, 'index'])->middleware('ensure.teacher_or_admin');
     Route::post('attendances', [\App\Http\Controllers\AttendanceController::class, 'store'])->middleware('ensure.teacher_or_admin');
+    // CU18 - Registrar asistencia mediante QR (Docente/Admin)
+    Route::post('attendances/qr', [\App\Http\Controllers\AttendanceController::class, 'registerQr'])->middleware('ensure.teacher_or_admin');
     Route::get('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'show'])->middleware('ensure.teacher_or_admin');
     Route::patch('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'update'])->middleware('ensure.teacher_or_admin');
     Route::delete('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'destroy'])->middleware('ensure.admin');

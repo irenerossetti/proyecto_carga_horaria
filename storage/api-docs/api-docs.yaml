@@ -1742,6 +1742,159 @@ paths:
                     time: "08:05"
                     status: present
 
+          /api/attendances/qr:
+            post:
+              summary: CU18 - Registrar asistencia mediante código QR (Docente/Admin)
+              tags:
+                - Asistencias
+              security:
+                - cookieAuth: []
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        schedule_id:
+                          type: integer
+                        qr_payload:
+                          type: string
+                      required:
+                        - schedule_id
+                    example:
+                      schedule_id: 10
+                      qr_payload: "SCHEDULE:10;TS:169"
+              responses:
+                '201':
+                  description: Asistencia registrada
+                  content:
+                    application/json:
+                      example:
+                        id: 11
+                        teacher_id: 3
+                        schedule_id: 10
+                        date: "2025-11-03"
+                        time: "08:05"
+                        status: present
+
+          /api/schedules/{id}/cancel:
+            post:
+              summary: CU19 - Anular clase o cambiar a modalidad virtual (Docente/Admin)
+              tags:
+                - Horarios
+              security:
+                - cookieAuth: []
+              parameters:
+                - in: path
+                  name: id
+                  schema:
+                    type: integer
+                  required: true
+                  description: ID del horario a anular
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        mode:
+                          type: string
+                          enum: [cancelled, virtual]
+                        reason:
+                          type: string
+                      required:
+                        - mode
+                    example:
+                      mode: cancelled
+                      reason: "Docente enfermo"
+              responses:
+                '201':
+                  description: Registro de anulación creado
+                  content:
+                    application/json:
+                      example:
+                        message: "Class cancelled"
+                        cancellation:
+                          id: 1
+                          schedule_id: 10
+                          mode: cancelled
+                          reason: "Docente enfermo"
+
+              /api/cancellations:
+                get:
+                  summary: Listar anulaciones de clases (Docente/Admin)
+                  tags:
+                    - Horarios
+                  security:
+                    - cookieAuth: []
+                  parameters:
+                    - in: query
+                      name: teacher_id
+                      schema:
+                        type: integer
+                    - in: query
+                      name: schedule_id
+                      schema:
+                        type: integer
+                  responses:
+                    '200':
+                      description: Lista de anulaciones
+                      content:
+                        application/json:
+                          example:
+                            - id: 1
+                              schedule_id: 10
+                              teacher_id: 3
+                              mode: cancelled
+                              reason: "Docente enfermo"
+
+              /api/cancellations/{id}:
+                get:
+                  summary: Obtener anulación por id (Docente/Admin)
+                  tags:
+                    - Horarios
+                  security:
+                    - cookieAuth: []
+                  parameters:
+                    - in: path
+                      name: id
+                      schema:
+                        type: integer
+                      required: true
+                  responses:
+                    '200':
+                      description: Registro de anulación
+                      content:
+                        application/json:
+                          example:
+                            id: 1
+                            schedule_id: 10
+                            teacher_id: 3
+                            mode: cancelled
+                            reason: "Docente enfermo"
+                delete:
+                  summary: Eliminar anulación (Admin)
+                  tags:
+                    - Horarios
+                  security:
+                    - cookieAuth: []
+                  parameters:
+                    - in: path
+                      name: id
+                      schema:
+                        type: integer
+                      required: true
+                  responses:
+                    '200':
+                      description: Anulación eliminada
+                      content:
+                        application/json:
+                          example:
+                            message: "Cancellation deleted"
+                            id: 1
+
       /api/attendances/{id}:
         get:
           summary: CU17 - Obtener registro de asistencia (Docente/Admin)
