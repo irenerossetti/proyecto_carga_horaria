@@ -8,6 +8,19 @@ use Illuminate\Support\Facades\Auth;
 
 class ClassCancellationController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/cancellations",
+     *     summary="CU19 - Listar cancelaciones de clases",
+     *     description="Lista todas las cancelaciones. Admin ve todas, docentes solo las propias",
+     *     tags={"Cancelaciones"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="teacher_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="schedule_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Lista de cancelaciones"),
+     *     @OA\Response(response=403, description="Forbidden")
+     * )
+     */
     // List cancellations (admin sees all; teacher sees own cancellations)
     public function index(Request $request)
     {
@@ -30,6 +43,19 @@ class ClassCancellationController extends Controller
         return response()->json($query->with(['schedule','teacher','canceledBy'])->orderBy('created_at','desc')->get());
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/cancellations/{id}",
+     *     summary="CU19 - Ver cancelación por ID",
+     *     description="Obtiene los detalles de una cancelación específica",
+     *     tags={"Cancelaciones"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Cancelación encontrada"),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=404, description="No encontrada")
+     * )
+     */
     public function show($id)
     {
         $c = ClassCancellation::with(['schedule','teacher','canceledBy'])->findOrFail($id);
@@ -43,6 +69,19 @@ class ClassCancellationController extends Controller
         return response()->json($c);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/cancellations/{id}",
+     *     summary="CU19 - Eliminar cancelación (Admin)",
+     *     description="Elimina un registro de cancelación. Solo administradores",
+     *     tags={"Cancelaciones"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Cancelación eliminada"),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=404, description="No encontrada")
+     * )
+     */
     // Delete a cancellation (admin only)
     public function destroy($id)
     {

@@ -13,6 +13,25 @@ use Illuminate\Support\Facades\DB;
 class ScheduleGeneratorController extends Controller
 {
     /**
+     * @OA\Post(
+     *     path="/api/schedules/generate",
+     *     summary="CU15 - Generar horarios automáticamente",
+     *     description="Genera horarios para grupos sin asignación usando algoritmo greedy. Asigna automáticamente aulas y docentes disponibles.",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\RequestBody(@OA\JsonContent(
+     *         @OA\Property(property="period_id", type="integer", nullable=true, description="ID del periodo académico (opcional)")
+     *     )),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Generación completada",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="created", type="integer", description="Cantidad de horarios creados"),
+     *             @OA\Property(property="schedules", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Forbidden - Solo administradores")
+     * )
      * Generate schedules for a given period (or active period if not provided).
      * This is a simple greedy generator: for each group without schedules, try to
      * assign the first available timeslot/room/teacher that has no conflict.

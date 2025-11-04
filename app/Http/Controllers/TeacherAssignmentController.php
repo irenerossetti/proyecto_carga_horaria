@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\Auth;
 
 class TeacherAssignmentController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/assignments",
+     *     summary="CU13 - Listar asignaciones de carga horaria",
+     *     tags={"Asignaciones"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="teacher_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="period_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Lista de asignaciones")
+     * )
+     */
     public function index(Request $request)
     {
         $query = TeacherAssignment::query();
@@ -21,6 +32,22 @@ class TeacherAssignmentController extends Controller
         return response()->json($query->with(['subject','group','teacher'])->get());
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/teachers/{id}/assignments",
+     *     summary="CU13 - Crear asignación de carga horaria",
+     *     tags={"Asignaciones"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"teacher_id"},
+     *         @OA\Property(property="teacher_id", type="integer"),
+     *         @OA\Property(property="subject_id", type="integer", nullable=true),
+     *         @OA\Property(property="group_id", type="integer", nullable=true),
+     *         @OA\Property(property="period_id", type="integer", nullable=true)
+     *     )),
+     *     @OA\Response(response=201, description="Asignación creada")
+     * )
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -37,12 +64,37 @@ class TeacherAssignmentController extends Controller
         return response()->json($assignment, 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/assignments/{id}",
+     *     summary="CU13 - Ver asignación por ID",
+     *     tags={"Asignaciones"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Asignación encontrada")
+     * )
+     */
     public function show($id)
     {
         $assignment = TeacherAssignment::with(['subject','group','teacher'])->findOrFail($id);
         return response()->json($assignment);
     }
 
+    /**
+     * @OA\Patch(
+     *     path="/api/assignments/{id}",
+     *     summary="CU13 - Actualizar asignación",
+     *     tags={"Asignaciones"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(@OA\JsonContent(
+     *         @OA\Property(property="subject_id", type="integer", nullable=true),
+     *         @OA\Property(property="group_id", type="integer", nullable=true),
+     *         @OA\Property(property="period_id", type="integer", nullable=true)
+     *     )),
+     *     @OA\Response(response=200, description="Asignación actualizada")
+     * )
+     */
     public function update(Request $request, $id)
     {
         $assignment = TeacherAssignment::findOrFail($id);
@@ -55,6 +107,16 @@ class TeacherAssignmentController extends Controller
         return response()->json($assignment);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/assignments/{id}",
+     *     summary="CU13 - Eliminar asignación",
+     *     tags={"Asignaciones"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Asignación eliminada")
+     * )
+     */
     public function destroy($id)
     {
         $assignment = TeacherAssignment::findOrFail($id);

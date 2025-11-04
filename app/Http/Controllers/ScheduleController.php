@@ -14,6 +14,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ScheduleController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/schedules",
+     *     summary="CU13 - Listar horarios",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="group_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="teacher_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Lista de horarios")
+     * )
+     */
     public function index(Request $request)
     {
         $query = Schedule::query();
@@ -23,6 +34,15 @@ class ScheduleController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/schedules/weekly",
+     *     summary="Ver horarios semanales agrupados por día",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="teacher_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="group_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Horarios agrupados por día")
+     * )
      * Return weekly schedule grouped by day. Accepts teacher_id or group_id as filter.
      */
     public function weekly(Request $request)
@@ -35,6 +55,20 @@ class ScheduleController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/schedules/export",
+     *     summary="CU16 - Exportar horarios a Excel",
+     *     description="Exporta los horarios en formato Excel (.xlsx)",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="teacher_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="group_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Archivo Excel",
+     *         @OA\MediaType(mediaType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+     *     )
+     * )
      * Export schedules to Excel. Accepts teacher_id or group_id filters.
      */
     public function export(Request $request)
@@ -76,6 +110,20 @@ class ScheduleController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/schedules/export.pdf",
+     *     summary="CU16 - Exportar horarios a PDF",
+     *     description="Exporta los horarios en formato PDF",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="teacher_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="group_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Archivo PDF",
+     *         @OA\MediaType(mediaType="application/pdf")
+     *     )
+     * )
      * Export schedules to PDF. Requires barryvdh/laravel-dompdf or dompdf installed.
      */
     public function exportPdf(Request $request)
@@ -140,6 +188,26 @@ class ScheduleController extends Controller
         ], 501);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/schedules",
+     *     summary="CU13 - Crear horario",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"group_id", "day_of_week", "start_time", "end_time"},
+     *         @OA\Property(property="group_id", type="integer"),
+     *         @OA\Property(property="room_id", type="integer", nullable=true),
+     *         @OA\Property(property="teacher_id", type="integer", nullable=true),
+     *         @OA\Property(property="day_of_week", type="string", example="lunes"),
+     *         @OA\Property(property="start_time", type="string", example="08:00"),
+     *         @OA\Property(property="end_time", type="string", example="10:00")
+     *     )),
+     *     @OA\Response(response=201, description="Horario creado"),
+     *     @OA\Response(response=409, description="Conflicto de horario"),
+     *     @OA\Response(response=422, description="Validación fallida")
+     * )
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -216,12 +284,40 @@ class ScheduleController extends Controller
         return response()->json($schedule, 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/schedules/{id}",
+     *     summary="Ver horario por ID",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Horario encontrado")
+     * )
+     */
     public function show($id)
     {
         $schedule = Schedule::with(['group','room','teacher'])->findOrFail($id);
         return response()->json($schedule);
     }
 
+    /**
+     * @OA\Patch(
+     *     path="/api/schedules/{id}",
+     *     summary="CU14 - Actualizar horario",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(@OA\JsonContent(
+     *         @OA\Property(property="room_id", type="integer", nullable=true),
+     *         @OA\Property(property="teacher_id", type="integer", nullable=true),
+     *         @OA\Property(property="start_time", type="string"),
+     *         @OA\Property(property="end_time", type="string")
+     *     )),
+     *     @OA\Response(response=200, description="Horario actualizado"),
+     *     @OA\Response(response=409, description="Conflicto de horario"),
+     *     @OA\Response(response=422, description="Validación fallida")
+     * )
+     */
     public function update(Request $request, $id)
     {
         $schedule = Schedule::findOrFail($id);
@@ -302,6 +398,16 @@ class ScheduleController extends Controller
         return response()->json($schedule);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/schedules/{id}",
+     *     summary="CU15 - Eliminar horario",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Horario eliminado")
+     * )
+     */
     public function destroy($id)
     {
         $schedule = Schedule::findOrFail($id);
@@ -310,6 +416,20 @@ class ScheduleController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/schedules/{id}/cancel",
+     *     summary="CU19 - Anular clase o cambiar a modalidad virtual",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"mode"},
+     *         @OA\Property(property="mode", type="string", enum={"cancelled", "virtual"}),
+     *         @OA\Property(property="reason", type="string", nullable=true)
+     *     )),
+     *     @OA\Response(response=201, description="Cancelación registrada"),
+     *     @OA\Response(response=403, description="Forbidden")
+     * )
      * CU19 - Cancel a class or mark it as virtual. Creates a cancellation record.
      * Body: { mode: 'cancelled'|'virtual', reason?: string }
      */
@@ -345,6 +465,21 @@ class ScheduleController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/schedules/{id}/qrcode",
+     *     summary="CU18 - Generar código QR firmado para un horario",
+     *     description="Genera un código QR con token firmado HMAC-SHA256 para registro de asistencia",
+     *     tags={"Horarios"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", description="ID del horario", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Imagen PNG del código QR",
+     *         @OA\MediaType(mediaType="image/png")
+     *     ),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=404, description="Horario no encontrado")
+     * )
      * Generate a signed QR for a schedule which can be scanned to register attendance.
      * Only the assigned teacher or an admin may generate the QR for that schedule.
      * Returns a PNG image with a short-lived signed token payload.

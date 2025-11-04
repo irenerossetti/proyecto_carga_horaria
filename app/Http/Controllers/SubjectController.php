@@ -18,12 +18,40 @@ class SubjectController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/subjects",
+     *     summary="CU08 - Listar materias",
+     *     tags={"Materias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Response(response=200, description="Lista de materias"),
+     *     @OA\Response(response=403, description="Forbidden")
+     * )
+     */
     public function index()
     {
         $this->ensureAdmin();
         return response()->json(Subject::orderBy('created_at', 'desc')->get());
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/subjects",
+     *     summary="CU08 - Crear materia",
+     *     tags={"Materias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"code", "name"},
+     *         @OA\Property(property="code", type="string", example="SIS-101"),
+     *         @OA\Property(property="name", type="string", example="Programación I"),
+     *         @OA\Property(property="credits", type="integer", nullable=true, example=4),
+     *         @OA\Property(property="description", type="string", nullable=true)
+     *     )),
+     *     @OA\Response(response=201, description="Materia creada"),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=422, description="Código duplicado")
+     * )
+     */
     public function store(Request $request)
     {
         $this->ensureAdmin();
@@ -39,12 +67,41 @@ class SubjectController extends Controller
         return response()->json($subject, 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/subjects/{id}",
+     *     summary="CU08 - Ver materia",
+     *     tags={"Materias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Materia encontrada"),
+     *     @OA\Response(response=404, description="No encontrada")
+     * )
+     */
     public function show($id)
     {
         $this->ensureAdmin();
         return response()->json(Subject::findOrFail($id));
     }
 
+    /**
+     * @OA\Patch(
+     *     path="/api/subjects/{id}",
+     *     summary="CU08 - Actualizar materia",
+     *     tags={"Materias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(@OA\JsonContent(
+     *         @OA\Property(property="code", type="string"),
+     *         @OA\Property(property="name", type="string"),
+     *         @OA\Property(property="credits", type="integer", nullable=true),
+     *         @OA\Property(property="description", type="string", nullable=true)
+     *     )),
+     *     @OA\Response(response=200, description="Materia actualizada"),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=422, description="Código duplicado")
+     * )
+     */
     public function update(Request $request, $id)
     {
         $this->ensureAdmin();
@@ -63,6 +120,17 @@ class SubjectController extends Controller
         return response()->json($subject);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/subjects/{id}",
+     *     summary="CU08 - Eliminar materia",
+     *     tags={"Materias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Materia eliminada"),
+     *     @OA\Response(response=403, description="Forbidden")
+     * )
+     */
     public function destroy($id)
     {
         $this->ensureAdmin();

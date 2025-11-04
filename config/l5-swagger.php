@@ -46,10 +46,6 @@ return [
                 'annotations' => [
                     base_path('app'),
                 ],
-                // Usar el YAML custom que añadimos en /docs/openapi.yaml
-                'custom_docs' => [
-                    'yaml' => base_path('docs/openapi.yaml'),
-                ],
             ],
         ],
     ],

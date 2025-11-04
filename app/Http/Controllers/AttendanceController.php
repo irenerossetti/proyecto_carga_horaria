@@ -11,6 +11,17 @@ use Illuminate\Support\Facades\Cache;
 
 class AttendanceController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/attendances",
+     *     summary="CU17 - Listar asistencias",
+     *     tags={"Asistencias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="teacher_id", in="query", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="date", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Response(response=200, description="Lista de asistencias")
+     * )
+     */
     public function index(Request $request)
     {
         $query = Attendance::query();
@@ -30,6 +41,25 @@ class AttendanceController extends Controller
         return response()->json($query->with(['teacher','schedule'])->orderBy('date','desc')->get());
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/attendances",
+     *     summary="CU17 - Registrar asistencia manual",
+     *     tags={"Asistencias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         required={"teacher_id", "date", "status"},
+     *         @OA\Property(property="teacher_id", type="integer"),
+     *         @OA\Property(property="schedule_id", type="integer", nullable=true),
+     *         @OA\Property(property="date", type="string", format="date"),
+     *         @OA\Property(property="time", type="string", example="08:00"),
+     *         @OA\Property(property="status", type="string", enum={"present", "absent", "late"}),
+     *         @OA\Property(property="notes", type="string", nullable=true)
+     *     )),
+     *     @OA\Response(response=201, description="Asistencia creada"),
+     *     @OA\Response(response=403, description="Forbidden")
+     * )
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -58,12 +88,37 @@ class AttendanceController extends Controller
         return response()->json($attendance, 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/attendances/{id}",
+     *     summary="Ver asistencia por ID",
+     *     tags={"Asistencias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Asistencia encontrada")
+     * )
+     */
     public function show($id)
     {
         $att = Attendance::with(['teacher','schedule'])->findOrFail($id);
         return response()->json($att);
     }
 
+    /**
+     * @OA\Patch(
+     *     path="/api/attendances/{id}",
+     *     summary="Actualizar asistencia",
+     *     tags={"Asistencias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(@OA\JsonContent(
+     *         @OA\Property(property="status", type="string", enum={"present", "absent", "late"}),
+     *         @OA\Property(property="notes", type="string", nullable=true),
+     *         @OA\Property(property="time", type="string")
+     *     )),
+     *     @OA\Response(response=200, description="Asistencia actualizada")
+     * )
+     */
     public function update(Request $request, $id)
     {
         $att = Attendance::findOrFail($id);
@@ -85,6 +140,16 @@ class AttendanceController extends Controller
         return response()->json($att);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/attendances/{id}",
+     *     summary="Eliminar asistencia",
+     *     tags={"Asistencias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Asistencia eliminada")
+     * )
+     */
     public function destroy($id)
     {
         $att = Attendance::findOrFail($id);
@@ -93,6 +158,20 @@ class AttendanceController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/attendances/qr",
+     *     summary="CU18 - Registrar asistencia mediante código QR",
+     *     description="Registra asistencia validando un token QR firmado con HMAC-SHA256",
+     *     tags={"Asistencias"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(
+     *         @OA\Property(property="qr_payload", type="string", description="Token firmado (payload.signature)"),
+     *         @OA\Property(property="schedule_id", type="integer", description="ID del horario (legacy)")
+     *     )),
+     *     @OA\Response(response=201, description="Asistencia registrada"),
+     *     @OA\Response(response=422, description="QR inválido o expirado"),
+     *     @OA\Response(response=409, description="QR ya utilizado")
+     * )
      * CU18 - Register attendance via QR by teacher (or admin).
      * Expected payload: { schedule_id: int, qr_payload?: string }
      */

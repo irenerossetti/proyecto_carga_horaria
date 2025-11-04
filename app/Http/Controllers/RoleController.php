@@ -21,6 +21,27 @@ class RoleController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/roles",
+     *     summary="CU05 - Listar roles",
+     *     description="Lista todos los roles disponibles en el sistema",
+     *     tags={"Roles"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lista de roles",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="name", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Forbidden - Solo administradores")
+     * )
+     */
     public function index()
     {
         $this->ensureAdmin();
@@ -30,6 +51,32 @@ class RoleController extends Controller
         return response()->json($roles);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/roles",
+     *     summary="CU05 - Crear rol",
+     *     description="Crea un nuevo rol en el sistema",
+     *     tags={"Roles"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="coordinador")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Rol creado exitosamente",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="rol_id", type="integer"),
+     *             @OA\Property(property="nombre", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=422, description="Validación fallida")
+     * )
+     */
     public function store(Request $request)
     {
         $this->ensureAdmin();
@@ -39,6 +86,44 @@ class RoleController extends Controller
         return response()->json($role, 201);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/users/{id}/roles",
+     *     summary="CU05 - Asignar roles a usuario",
+     *     description="Asigna uno o más roles a un usuario específico",
+     *     tags={"Roles"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID del usuario",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"roles"},
+     *             @OA\Property(
+     *                 property="roles",
+     *                 type="array",
+     *                 @OA\Items(type="string"),
+     *                 example={"docente", "coordinador"}
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Roles asignados exitosamente",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="roles", type="array", @OA\Items(type="string"))
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=404, description="Usuario o roles no encontrados")
+     * )
+     */
     public function assignToUser(Request $request, $userId)
     {
         $this->ensureAdmin();
@@ -64,6 +149,33 @@ class RoleController extends Controller
         return response()->json(['message' => 'No roles found to assign'], 404);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/users/{id}/roles",
+     *     summary="CU05 - Obtener roles de usuario",
+     *     description="Lista los roles asignados a un usuario específico",
+     *     tags={"Roles"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID del usuario",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lista de roles del usuario",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(type="string"),
+     *             example={"docente", "coordinador"}
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=404, description="Usuario no encontrado")
+     * )
+     */
     public function getUserRoles($userId)
     {
         $this->ensureAdmin();
@@ -81,6 +193,38 @@ class RoleController extends Controller
         return response()->json([]);
     }
 
+    /**
+     * @OA\Patch(
+     *     path="/api/roles/{id}",
+     *     summary="CU05 - Actualizar rol",
+     *     description="Actualiza el nombre de un rol existente",
+     *     tags={"Roles"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="coordinador_académico")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Rol actualizado exitosamente",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer"),
+     *             @OA\Property(property="name", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=404, description="Rol no encontrado")
+     * )
+     */
     public function update(Request $request, $id)
     {
         $this->ensureAdmin();
@@ -97,6 +241,32 @@ class RoleController extends Controller
         return response()->json(['id' => $role->rol_id, 'name' => $role->nombre]);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/roles/{id}",
+     *     summary="CU05 - Eliminar rol",
+     *     description="Elimina un rol si no está asignado a ningún usuario",
+     *     tags={"Roles"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Rol eliminado exitosamente",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Role deleted"),
+     *             @OA\Property(property="id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Forbidden"),
+     *     @OA\Response(response=404, description="Rol no encontrado"),
+     *     @OA\Response(response=409, description="Rol está asignado a usuarios, no se puede eliminar")
+     * )
+     */
     public function destroy($id)
     {
         $this->ensureAdmin();

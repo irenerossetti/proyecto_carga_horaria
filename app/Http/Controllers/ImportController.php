@@ -21,6 +21,35 @@ class ImportController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/imports",
+     *     summary="CU12 - Importar datos masivos desde CSV/Excel",
+     *     description="Importa docentes, materias o grupos desde archivo CSV o Excel",
+     *     tags={"Importación"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"type", "file"},
+     *                 @OA\Property(property="type", type="string", enum={"teachers", "subjects", "groups"}, example="teachers"),
+     *                 @OA\Property(property="file", type="string", format="binary", description="Archivo CSV o Excel")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Importación completada",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="created", type="integer", example=10),
+     *             @OA\Property(property="updated", type="integer", example=5),
+     *             @OA\Property(property="errors", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Forbidden - Solo administradores"),
+     *     @OA\Response(response=422, description="Archivo inválido")
+     * )
      * CU12 - Import CSV for teachers, subjects, groups
      * Accepts multipart/form-data: file (csv), type (teachers|subjects|groups)
      */
