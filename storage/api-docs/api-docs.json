@@ -388,6 +388,25 @@
                 ]
             }
         },
+        "/api/admin/dashboard": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "CU23 - Panel de Control Administrativo",
+                "operationId": "97acf12e9dd8231f6a9cbd262c54c20c",
+                "responses": {
+                    "200": {
+                        "description": "Estadísticas resumidas para admin"
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            }
+        },
         "/api/attendances": {
             "get": {
                 "tags": [
@@ -643,6 +662,96 @@
                 ]
             }
         },
+        "/api/reports/attendances/teacher/{id}": {
+            "get": {
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "CU24 - Visualizar asistencia por docente",
+                "operationId": "f30fd1322dfad77d07f9533b477e5d70",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reporte de asistencia por docente"
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reports/attendances/group/{id}": {
+            "get": {
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "CU25 - Visualizar asistencia por grupo",
+                "operationId": "13e8be7f229d52f16a851036bb2020dd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reporte de asistencia por grupo"
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            }
+        },
         "/api/cancellations": {
             "get": {
                 "tags": [
@@ -743,6 +852,80 @@
                     },
                     "404": {
                         "description": "No encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/conflicts": {
+            "get": {
+                "tags": [
+                    "Conflictos"
+                ],
+                "summary": "CU20 - Visualizar panel de conflictos horarios",
+                "operationId": "bcdbe281bc6698494a7c7e4a173aeb82",
+                "parameters": [
+                    {
+                        "name": "only_unresolved",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de conflictos detectados (y resueltos)"
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Conflictos"
+                ],
+                "summary": "Marcar/Resolver un conflicto manualmente",
+                "operationId": "2e83adf4ae6c4737683b9c2b65fc32cb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "schedule_a_id",
+                                    "schedule_b_id"
+                                ],
+                                "properties": {
+                                    "schedule_a_id": {
+                                        "type": "integer"
+                                    },
+                                    "schedule_b_id": {
+                                        "type": "integer"
+                                    },
+                                    "resolution_note": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Conflicto marcado/creado"
+                    },
+                    "403": {
+                        "description": "Forbidden"
                     }
                 },
                 "security": [
@@ -1025,6 +1208,124 @@
                     },
                     "422": {
                         "description": "Archivo inválido"
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reservations/available": {
+            "get": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "CU22 - Consultar aulas liberadas por anulación",
+                "operationId": "1b0da1dd84b4abf9846e9360b34d5f8d",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "start_time",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "end_time",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de aulas liberadas por anulaciones"
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reservations": {
+            "get": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "Listar reservas del usuario (docente) o todas (admin)",
+                "operationId": "fbc6050d9f7fdb07075d3aaeb157ffa9",
+                "responses": {
+                    "200": {
+                        "description": "Lista de reservas"
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "CU22 - Reservar aula liberada por anulación",
+                "operationId": "01e3d21dc330a31de025203bc142ffa3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "room_id",
+                                    "reserved_at",
+                                    "expires_at"
+                                ],
+                                "properties": {
+                                    "room_id": {
+                                        "type": "integer"
+                                    },
+                                    "schedule_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "reserved_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "expires_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Reserva creada"
+                    },
+                    "403": {
+                        "description": "Forbidden"
                     }
                 },
                 "security": [
@@ -1672,6 +1973,76 @@
                     },
                     "403": {
                         "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/rooms/available": {
+            "get": {
+                "tags": [
+                    "Aulas"
+                ],
+                "summary": "CU21 - Consultar aulas disponibles",
+                "operationId": "d0e4d227d3155d4cc01da6bc84a6104b",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "day",
+                        "in": "query",
+                        "schema": {
+                            "description": "día de la semana, opcional",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "start_time",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "08:00"
+                        }
+                    },
+                    {
+                        "name": "end_time",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "10:00"
+                        }
+                    },
+                    {
+                        "name": "equipment",
+                        "in": "query",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    {
+                        "name": "capacity",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de aulas disponibles"
                     }
                 },
                 "security": [
@@ -3038,12 +3409,24 @@
             "description": "Periodos Académicos"
         },
         {
+            "name": "Admin",
+            "description": "Admin"
+        },
+        {
             "name": "Asistencias",
             "description": "Asistencias"
         },
         {
+            "name": "Reportes",
+            "description": "Reportes"
+        },
+        {
             "name": "Cancelaciones",
             "description": "Cancelaciones"
+        },
+        {
+            "name": "Conflictos",
+            "description": "Conflictos"
         },
         {
             "name": "Grupos",
@@ -3052,6 +3435,10 @@
         {
             "name": "Importación",
             "description": "Importación"
+        },
+        {
+            "name": "Reservas",
+            "description": "Reservas"
         },
         {
             "name": "Roles",

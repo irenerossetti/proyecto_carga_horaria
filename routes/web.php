@@ -91,6 +91,8 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
     // CU11 - Equipamiento de aulas
     Route::get('rooms/{id}/equipment', [\App\Http\Controllers\RoomController::class, 'equipment']);
     Route::put('rooms/{id}/equipment', [\App\Http\Controllers\RoomController::class, 'updateEquipment']);
+    // CU21 - Consultar aulas disponibles (docente/admin)
+    Route::get('rooms/available', [\App\Http\Controllers\RoomController::class, 'available'])->middleware('ensure.teacher_or_admin');
 
     // CU12 - Importar datos masivos (CSV)
     Route::post('imports', [\App\Http\Controllers\ImportController::class, 'import']);
@@ -125,6 +127,25 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
     Route::get('cancellations', [\App\Http\Controllers\ClassCancellationController::class, 'index'])->middleware('ensure.teacher_or_admin');
     Route::get('cancellations/{id}', [\App\Http\Controllers\ClassCancellationController::class, 'show'])->middleware('ensure.teacher_or_admin');
     Route::delete('cancellations/{id}', [\App\Http\Controllers\ClassCancellationController::class, 'destroy'])->middleware('ensure.admin');
+
+    // CU20 - Panel de conflictos horarios (Admin)
+    Route::get('conflicts', [\App\Http\Controllers\ConflictController::class, 'index'])->middleware('ensure.admin');
+    // Resolver/Marcar conflicto
+    Route::post('conflicts', [\App\Http\Controllers\ConflictController::class, 'store'])->middleware('ensure.admin');
+
+    // CU22 - Consultar y reservar aulas liberadas
+    Route::get('reservations/available', [\App\Http\Controllers\ReservationController::class, 'available'])->middleware('ensure.teacher_or_admin');
+    Route::post('reservations', [\App\Http\Controllers\ReservationController::class, 'store'])->middleware('ensure.teacher_or_admin');
+    Route::get('reservations', [\App\Http\Controllers\ReservationController::class, 'index'])->middleware('ensure.teacher_or_admin');
+
+    // CU23 - Panel admin
+    Route::get('admin/dashboard', [\App\Http\Controllers\AdminDashboardController::class, 'index'])->middleware('ensure.admin');
+
+    // CU24 - Asistencia por docente
+    Route::get('reports/attendances/teacher/{id}', [\App\Http\Controllers\AttendanceReportController::class, 'byTeacher'])->middleware('ensure.admin');
+
+    // CU25 - Asistencia por grupo
+    Route::get('reports/attendances/group/{id}', [\App\Http\Controllers\AttendanceReportController::class, 'byGroup'])->middleware('ensure.teacher_or_admin');
 
     // CU17 - Registrar asistencia docente (CRUD)
     Route::get('attendances', [\App\Http\Controllers\AttendanceController::class, 'index'])->middleware('ensure.teacher_or_admin');

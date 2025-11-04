@@ -179,6 +179,84 @@ class RoomController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/rooms/available",
+     *     summary="CU21 - Consultar aulas disponibles",
+     *     tags={"Aulas"},
+     *     security={{"cookieAuth": {}}},
+     *     @OA\Parameter(name="date", in="query", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="day", in="query", @OA\Schema(type="string", description="día de la semana, opcional")),
+     *     @OA\Parameter(name="start_time", in="query", @OA\Schema(type="string", example="08:00")),
+     *     @OA\Parameter(name="end_time", in="query", @OA\Schema(type="string", example="10:00")),
+     *     @OA\Parameter(name="equipment", in="query", @OA\Schema(type="array", @OA\Items(type="string"))),
+     *     @OA\Parameter(name="capacity", in="query", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Lista de aulas disponibles")
+     * )
+     */
+    public function available(Request $request)
+    {
+        $user = $request->user();
+        if (! $user || (! $user->hasRole('administrador') && ! $user->hasRole('docente'))) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $data = $request->validate([
+            'date' => 'nullable|date',
+            'day' => 'nullable|string',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i',
+            'equipment' => 'nullable|array',
+            'equipment.*' => 'string',
+            'capacity' => 'nullable|integer',
+        ]);
+
+        $rooms = Room::all();
+
+        // Exclude rooms that have an overlapping schedule
+        $occupiedRoomIds = [];
+        if (! empty($data['start_time']) && ! empty($data['end_time'])) {
+            $start = $data['start_time'];
+            $end = $data['end_time'];
+
+            $schedules = \App\Models\Schedule::where(function($q) use ($data) {
+                if (! empty($data['date'])) {
+                    $q->where('date', $data['date']);
+                }
+                if (! empty($data['day'])) {
+                    $q->orWhere('day', $data['day']);
+                }
+            })->get();
+
+            foreach ($schedules as $s) {
+                if (empty($s->start_time) || empty($s->end_time)) continue;
+                if ($s->start_time < $end && $s->end_time > $start) {
+                    $occupiedRoomIds[] = $s->room_id;
+                }
+            }
+        }
+
+        $available = $rooms->filter(function($room) use ($data, $occupiedRoomIds) {
+            if (! empty($data['capacity']) && isset($room->capacity) && $room->capacity < $data['capacity']) {
+                return false;
+            }
+            if (! empty($occupiedRoomIds) && in_array($room->id, $occupiedRoomIds)) return false;
+            if (! empty($data['equipment'])) {
+                $resources = $room->resources ? json_decode($room->resources, true) : [];
+                foreach ($data['equipment'] as $req) {
+                    $found = false;
+                    foreach ($resources as $r) {
+                        if (stripos($r, $req) !== false || strtolower($r) === strtolower($req)) { $found = true; break; }
+                    }
+                    if (! $found) return false;
+                }
+            }
+            return true;
+        })->values();
+
+        return response()->json($available);
+    }
+
+    /**
      * @OA\Delete(
      *     path="/api/rooms/{id}",
      *     summary="CU10 - Eliminar aula",
