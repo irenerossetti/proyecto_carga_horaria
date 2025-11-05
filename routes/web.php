@@ -147,6 +147,15 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
     // CU25 - Asistencia por grupo
     Route::get('reports/attendances/group/{id}', [\App\Http\Controllers\AttendanceReportController::class, 'byGroup'])->middleware('ensure.teacher_or_admin');
 
+    // CU26 - Generar reporte de horarios (PDF/Excel)
+    Route::get('reports/schedules', [\App\Http\Controllers\ReportController::class, 'schedules'])->middleware('ensure.teacher_or_admin');
+
+    // CU27 - Generar reporte de asistencia (PDF/Excel)
+    Route::get('reports/attendances', [\App\Http\Controllers\ReportController::class, 'attendances'])->middleware('ensure.teacher_or_admin');
+
+    // CU28 - Generar reporte de carga horaria (PDF/Excel)
+    Route::get('reports/workload', [\App\Http\Controllers\ReportController::class, 'workload'])->middleware('ensure.teacher_or_admin');
+
     // CU17 - Registrar asistencia docente (CRUD)
     Route::get('attendances', [\App\Http\Controllers\AttendanceController::class, 'index'])->middleware('ensure.teacher_or_admin');
     Route::post('attendances', [\App\Http\Controllers\AttendanceController::class, 'store'])->middleware('ensure.teacher_or_admin');
