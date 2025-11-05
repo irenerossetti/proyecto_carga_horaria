@@ -164,4 +164,22 @@ Route::prefix('api')->middleware(['auth'])->group(function () {
     Route::get('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'show'])->middleware('ensure.teacher_or_admin');
     Route::patch('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'update'])->middleware('ensure.teacher_or_admin');
     Route::delete('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'destroy'])->middleware('ensure.admin');
+
+    // CU29 - Configurar parámetros del sistema (Admin)
+    Route::get('system-parameters', [\App\Http\Controllers\SystemParameterController::class, 'index'])->middleware('ensure.admin');
+    Route::get('system-parameters/{key}', [\App\Http\Controllers\SystemParameterController::class, 'show'])->middleware('ensure.admin');
+    Route::post('system-parameters', [\App\Http\Controllers\SystemParameterController::class, 'store'])->middleware('ensure.admin');
+
+    // CU30 - Anuncios generales
+    Route::get('announcements', [\App\Http\Controllers\AnnouncementController::class, 'index'])->middleware('ensure.teacher_or_admin');
+    Route::post('announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->middleware('ensure.admin');
+    Route::get('announcements/{id}', [\App\Http\Controllers\AnnouncementController::class, 'show'])->middleware('ensure.teacher_or_admin');
+    Route::patch('announcements/{id}', [\App\Http\Controllers\AnnouncementController::class, 'update'])->middleware('ensure.admin');
+    Route::delete('announcements/{id}', [\App\Http\Controllers\AnnouncementController::class, 'destroy'])->middleware('ensure.admin');
+
+    // CU31 - Incidencias en aulas
+    Route::get('incidents', [\App\Http\Controllers\IncidentController::class, 'index'])->middleware('ensure.teacher_or_admin');
+    Route::post('incidents', [\App\Http\Controllers\IncidentController::class, 'store'])->middleware('ensure.teacher_or_admin');
+    Route::get('incidents/{id}', [\App\Http\Controllers\IncidentController::class, 'show'])->middleware('ensure.teacher_or_admin');
+    Route::patch('incidents/{id}', [\App\Http\Controllers\IncidentController::class, 'update'])->middleware('ensure.teacher_or_admin');
 });
