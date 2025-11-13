@@ -7,9 +7,10 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Note: previously executed outside transaction to address an aborted transaction state during deploy.
+     * Disable transactions for this migration to avoid PostgreSQL transaction issues
      */
-
+    public $withinTransaction = false;
+    
     /**
      * Run the migrations.
      */

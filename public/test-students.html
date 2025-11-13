@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Students API</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        input { padding: 5px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Test Students API</h1>
+    
+    <div class="section">
+        <h2>1. Listar Estudiantes</h2>
+        <button onclick="listStudents()">GET /api/students</button>
+        <pre id="list-result"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>2. Crear Estudiante</h2>
+        <input type="text" id="create-name" placeholder="Nombre" value="Test Student">
+        <input type="email" id="create-email" placeholder="Email" value="test@ficct.edu.bo">
+        <input type="text" id="create-reg" placeholder="Registro (9 dígitos)" value="123456789">
+        <button onclick="createStudent()">POST /api/students</button>
+        <pre id="create-result"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>3. Actualizar Estudiante</h2>
+        <input type="number" id="update-id" placeholder="ID del estudiante">
+        <input type="text" id="update-name" placeholder="Nuevo nombre">
+        <input type="email" id="update-email" placeholder="Nuevo email">
+        <input type="text" id="update-reg" placeholder="Nuevo registro">
+        <button onclick="updateStudent()">PATCH /api/students/{id}</button>
+        <pre id="update-result"></pre>
+    </div>
+    
+    <script>
+        const API_BASE = '/api';
+        
+        async function listStudents() {
+            try {
+                const response = await fetch(`${API_BASE}/students`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+                document.getElementById('list-result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('list-result').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function createStudent() {
+            try {
+                const data = {
+                    name: document.getElementById('create-name').value,
+                    email: document.getElementById('create-email').value,
+                    registration_number: document.getElementById('create-reg').value
+                };
+                
+                const response = await fetch(`${API_BASE}/students`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                document.getElementById('create-result').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('create-result').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function updateStudent() {
+            try {
+                const id = document.getElementById('update-id').value;
+                const data = {};
+                
+                const name = document.getElementById('update-name').value;
+                const email = document.getElementById('update-email').value;
+                const reg = document.getElementById('update-reg').value;
+                
+                if (name) data.name = name;
+                if (email) data.email = email;
+                if (reg) data.registration_number = reg;
+                
+                console.log('Updating student:', id, data);
+                
+                const response = await fetch(`${API_BASE}/students/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                document.getElementById('update-result').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('update-result').textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

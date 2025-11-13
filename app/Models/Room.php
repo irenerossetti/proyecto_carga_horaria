@@ -6,7 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
-    protected $table = 'rooms';
+    protected $table = 'public.rooms';
+    protected $fillable = ['name', 'capacity', 'type'];
+    public $timestamps = false;
 
-    protected $fillable = ['name', 'capacity', 'location', 'resources'];
+    /**
+     * Relación uno a muchos con Schedule (un aula puede tener muchos horarios)
+     */
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'room_id');
+    }
 }

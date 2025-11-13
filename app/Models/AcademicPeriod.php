@@ -2,18 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AcademicPeriod extends Model
 {
-    protected $table = 'academic_periods';
+    use HasFactory;
 
     protected $fillable = [
-        'name',
-        'status',
+        'code',
+        'name', 
+        'description',
         'start_date',
         'end_date',
+        'status'
     ];
 
-    // status values: draft, active, closed
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+    ];
 }

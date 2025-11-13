@@ -46,7 +46,11 @@ class TeacherController extends Controller
     public function index()
     {
         $this->ensureAdmin();
-        return response()->json(Teacher::orderBy('created_at', 'desc')->get());
+        
+        // Usar SQL directo para evitar caché de PostgreSQL
+        $teachers = \DB::select('SELECT * FROM teachers ORDER BY created_at DESC');
+        
+        return response()->json($teachers);
     }
 
     /**
@@ -82,18 +86,54 @@ class TeacherController extends Controller
      */
     public function store(Request $request)
     {
-        $this->ensureAdmin();
+        try {
+            $this->ensureAdmin();
 
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:teachers,email',
-            'dni' => 'nullable|string',
-            'phone' => 'nullable|string',
-            'department' => 'nullable|string',
-        ]);
+            $data = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:teachers,email',
+                'code' => 'nullable|string',
+                'phone' => 'nullable|string',
+                'department' => 'nullable|string',
+                'specialization' => 'nullable|string',
+            ]);
 
-        $teacher = Teacher::create($data);
-        return response()->json($teacher, 201);
+            // Por ahora, user_id será el ID del usuario autenticado
+            $userId = auth()->id();
+
+            // Insertar usando SQL directo
+            \DB::insert(
+                'INSERT INTO teachers (user_id, name, email, dni, phone, department, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+                [
+                    $userId,
+                    $data['name'],
+                    $data['email'],
+                    $data['code'] ?? null,
+                    $data['phone'] ?? null,
+                    $data['department'] ?? null
+                ]
+            );
+
+            // Obtener el docente recién creado
+            $teacher = \DB::select('SELECT * FROM teachers WHERE email = ? ORDER BY id DESC LIMIT 1', [$data['email']])[0] ?? null;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Docente creado exitosamente',
+                'data' => $teacher
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el docente: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -262,21 +302,77 @@ class TeacherController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->ensureAdmin();
-        $teacher = Teacher::findOrFail($id);
+        try {
+            $this->ensureAdmin();
 
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:teachers,email,' . $id,
-            'dni' => 'nullable|string',
-            'phone' => 'nullable|string',
-            'department' => 'nullable|string',
-        ]);
+            // Verificar que el docente existe
+            $existing = \DB::select("SELECT id FROM teachers WHERE id = ?", [$id]);
+            if (empty($existing)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Docente no encontrado'
+                ], 404);
+            }
 
-        $teacher->fill($data);
-        $teacher->save();
+            $data = $request->validate([
+                'name' => 'sometimes|required|string|max:255',
+                'email' => 'sometimes|required|email|unique:teachers,email,' . $id,
+                'code' => 'nullable|string',
+                'phone' => 'nullable|string',
+                'department' => 'nullable|string',
+                'specialization' => 'nullable|string',
+            ]);
 
-        return response()->json($teacher);
+            // Construir la consulta de actualización
+            $updates = [];
+            $params = [];
+            
+            if (isset($data['name'])) {
+                $updates[] = "name = ?";
+                $params[] = $data['name'];
+            }
+            if (isset($data['email'])) {
+                $updates[] = "email = ?";
+                $params[] = $data['email'];
+            }
+            if (isset($data['code'])) {
+                $updates[] = "dni = ?";
+                $params[] = $data['code'];
+            }
+            if (isset($data['phone'])) {
+                $updates[] = "phone = ?";
+                $params[] = $data['phone'];
+            }
+            if (isset($data['department'])) {
+                $updates[] = "department = ?";
+                $params[] = $data['department'];
+            }
+            
+            $updates[] = "updated_at = CURRENT_TIMESTAMP";
+            $params[] = $id;
+            
+            \DB::update("UPDATE teachers SET " . implode(', ', $updates) . " WHERE id = ?", $params);
+            
+            // Obtener el docente actualizado
+            $teacher = \DB::select("SELECT * FROM teachers WHERE id = ?", [$id])[0] ?? null;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Docente actualizado exitosamente',
+                'data' => $teacher
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el docente: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -306,9 +402,31 @@ class TeacherController extends Controller
      */
     public function destroy($id)
     {
-        $this->ensureAdmin();
-        $teacher = Teacher::findOrFail($id);
-        $teacher->delete();
-        return response()->json(['message' => 'Teacher deleted', 'id' => $id]);
+        try {
+            $this->ensureAdmin();
+
+            // Verificar que el docente existe
+            $existing = \DB::select("SELECT id FROM teachers WHERE id = ?", [$id]);
+            if (empty($existing)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Docente no encontrado'
+                ], 404);
+            }
+
+            // Eliminar el docente
+            \DB::delete("DELETE FROM teachers WHERE id = ?", [$id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Docente eliminado exitosamente',
+                'id' => $id
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el docente: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

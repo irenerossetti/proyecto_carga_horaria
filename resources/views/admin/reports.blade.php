@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Reportes del Sistema - FICCT SGA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Instrument Sans', 'sans-serif'] },
+                    colors: { brand: { primary: '#881F34', hover: '#6d1829' } }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+<div class="flex min-h-screen">
+    @include('layouts.admin-sidebar')
+
+    <main class="flex-1 ml-64 p-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Reportes del Sistema</h1>
+            <p class="text-gray-500 mt-1">Genera y visualiza reportes académicos</p>
+        </div>
+
+        <!-- Report Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Carga Horaria -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="showReport('teacher-workload')">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Carga Horaria</h3>
+                        <p class="text-sm text-gray-500">Por docente</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Asistencia Docente -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="showReport('teacher-attendance')">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Asistencia Docente</h3>
+                        <p class="text-sm text-gray-500">Control de asistencia</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horarios Semanales -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="showReport('weekly-schedule')">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Horarios Semanales</h3>
+                        <p class="text-sm text-gray-500">Vista semanal</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aulas Disponibles -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="showReport('available-rooms')">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Aulas Disponibles</h3>
+                        <p class="text-sm text-gray-500">Disponibilidad</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Asistencia por Grupo -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="showReport('group-attendance')">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Asistencia por Grupo</h3>
+                        <p class="text-sm text-gray-500">Por grupo</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadísticas Generales -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="showReport('general-stats')">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Estadísticas Generales</h3>
+                        <p class="text-sm text-gray-500">Resumen del sistema</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Content Area -->
+        <div id="reportContent" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 id="reportTitle" class="text-xl font-bold text-gray-900"></h2>
+                <div class="flex gap-2">
+                    <button onclick="exportReport('pdf')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        PDF
+                    </button>
+                    <button onclick="exportReport('excel')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Excel
+                    </button>
+                    <button onclick="closeReport()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div id="reportFilters" class="mb-6"></div>
+            
+            <!-- Data Display -->
+            <div id="reportData"></div>
+        </div>
+    </main>
+</div>
+
+
+<script>
+const API_BASE = '/api';
+let currentReport = null;
+
+function showNotification(message, type = 'success') {
+    const alertClass = type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800';
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-lg border ${alertClass} z-50 shadow-lg`;
+    notification.innerHTML = `<span class="font-medium">${message}</span>`;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+
+async function showReport(reportType) {
+    currentReport = reportType;
+    const content = document.getElementById('reportContent');
+    const title = document.getElementById('reportTitle');
+    const filters = document.getElementById('reportFilters');
+    const data = document.getElementById('reportData');
+    
+    content.classList.remove('hidden');
+    
+    const titles = {
+        'teacher-workload': 'Reporte de Carga Horaria por Docente',
+        'teacher-attendance': 'Reporte de Asistencia Docente',
+        'weekly-schedule': 'Horarios Semanales',
+        'available-rooms': 'Aulas Disponibles',
+        'group-attendance': 'Asistencia por Grupo',
+        'general-stats': 'Estadísticas Generales del Sistema'
+    };
+    
+    title.textContent = titles[reportType] || 'Reporte';
+    
+    // Show loading
+    data.innerHTML = '<div class="text-center py-12"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mx-auto"></div><p class="mt-4 text-gray-500">Cargando datos...</p></div>';
+    
+    try {
+        const response = await fetch(`${API_BASE}/reports/${reportType}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error('Error al cargar el reporte');
+        }
+        
+        const result = await response.json();
+        console.log('Report data:', result);
+        renderReport(reportType, result.data);
+    } catch (error) {
+        console.error('Error completo:', error);
+        data.innerHTML = `<div class="text-center py-12 text-red-600">Error al cargar el reporte: ${error.message}<br><small>Revisa la consola para más detalles</small></div>`;
+    }
+}
+
+function renderReport(type, data) {
+    const dataDiv = document.getElementById('reportData');
+    
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+        dataDiv.innerHTML = '<div class="text-center py-12 text-gray-500">No hay datos disponibles</div>';
+        return;
+    }
+    
+    let html = '';
+    
+    switch(type) {
+        case 'teacher-workload':
+            html = renderWorkloadReport(data);
+            break;
+        case 'teacher-attendance':
+            html = renderTeacherAttendanceReport(data);
+            break;
+        case 'weekly-schedule':
+            html = renderWeeklyScheduleReport(data);
+            break;
+        case 'available-rooms':
+            html = renderAvailableRoomsReport(data);
+            break;
+        case 'group-attendance':
+            html = renderGroupAttendanceReport(data);
+            break;
+        case 'general-stats':
+            html = renderGeneralStatsReport(data);
+            break;
+    }
+    
+    dataDiv.innerHTML = html;
+}
+
+
+function renderWorkloadReport(data) {
+    return `
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Docente</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Asignaciones</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Horarios</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Horas Totales</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    ${data.map(row => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium">${row.teacher_name}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">${row.email}</td>
+                            <td class="px-6 py-4 text-center">${row.total_assignments || 0}</td>
+                            <td class="px-6 py-4 text-center">${row.total_schedules || 0}</td>
+                            <td class="px-6 py-4 text-center font-bold text-brand-primary">${parseFloat(row.total_hours || 0).toFixed(2)} hrs</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderTeacherAttendanceReport(data) {
+    return `
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Docente</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Registros</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Presentes</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Ausentes</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Tardanzas</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">% Asistencia</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    ${data.map(row => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium">${row.teacher_name}</td>
+                            <td class="px-6 py-4 text-center">${row.total_records || 0}</td>
+                            <td class="px-6 py-4 text-center text-green-600">${row.present_count || 0}</td>
+                            <td class="px-6 py-4 text-center text-red-600">${row.absent_count || 0}</td>
+                            <td class="px-6 py-4 text-center text-orange-600">${row.late_count || 0}</td>
+                            <td class="px-6 py-4 text-center font-bold">${row.attendance_percentage || 0}%</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderWeeklyScheduleReport(data) {
+    return `
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Día</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Horario</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aula</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Docente</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Materia</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grupo</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    ${data.map(row => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 font-medium">${row.day}</td>
+                            <td class="px-4 py-3">${row.start_time} - ${row.end_time}</td>
+                            <td class="px-4 py-3">${row.room_name} (${row.location})</td>
+                            <td class="px-4 py-3">${row.teacher_name || '-'}</td>
+                            <td class="px-4 py-3">${row.subject_name || '-'}</td>
+                            <td class="px-4 py-3">${row.group_name || '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+
+function renderAvailableRoomsReport(data) {
+    return `
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${data.map(room => `
+                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <h3 class="font-bold text-lg">${room.name}</h3>
+                    <p class="text-sm text-gray-600">${room.location}</p>
+                    <p class="text-sm mt-2">Capacidad: <span class="font-semibold">${room.capacity} personas</span></p>
+                    <span class="inline-block mt-2 px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">Disponible</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderGroupAttendanceReport(data) {
+    return `
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grupo</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Días Registrados</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Registros</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Presentes</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">% Asistencia</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    ${data.map(row => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium">${row.group_name}</td>
+                            <td class="px-6 py-4 text-center">${row.total_days || 0}</td>
+                            <td class="px-6 py-4 text-center">${row.total_records || 0}</td>
+                            <td class="px-6 py-4 text-center text-green-600">${row.present_count || 0}</td>
+                            <td class="px-6 py-4 text-center font-bold">${row.attendance_percentage || 0}%</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderGeneralStatsReport(data) {
+    return `
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
+                <div class="text-3xl font-bold text-blue-600">${data.total_teachers || 0}</div>
+                <div class="text-sm text-blue-800 mt-1">Total Docentes</div>
+            </div>
+            <div class="bg-green-50 rounded-lg p-6 border border-green-200">
+                <div class="text-3xl font-bold text-green-600">${data.total_students || 0}</div>
+                <div class="text-sm text-green-800 mt-1">Total Estudiantes</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-6 border border-purple-200">
+                <div class="text-3xl font-bold text-purple-600">${data.total_rooms || 0}</div>
+                <div class="text-sm text-purple-800 mt-1">Total Aulas</div>
+            </div>
+            <div class="bg-orange-50 rounded-lg p-6 border border-orange-200">
+                <div class="text-3xl font-bold text-orange-600">${data.total_subjects || 0}</div>
+                <div class="text-sm text-orange-800 mt-1">Total Materias</div>
+            </div>
+            <div class="bg-red-50 rounded-lg p-6 border border-red-200">
+                <div class="text-3xl font-bold text-red-600">${data.total_groups || 0}</div>
+                <div class="text-sm text-red-800 mt-1">Total Grupos</div>
+            </div>
+            ${data.period_assignments ? `
+            <div class="bg-indigo-50 rounded-lg p-6 border border-indigo-200">
+                <div class="text-3xl font-bold text-indigo-600">${data.period_assignments}</div>
+                <div class="text-sm text-indigo-800 mt-1">Asignaciones del Período</div>
+            </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function closeReport() {
+    document.getElementById('reportContent').classList.add('hidden');
+    currentReport = null;
+}
+
+function exportReport(format) {
+    if (!currentReport) {
+        showNotification('No hay reporte activo para exportar', 'error');
+        return;
+    }
+    
+    showNotification(`Descargando reporte en formato ${format.toUpperCase()}...`);
+    
+    // Crear formulario para enviar POST y descargar archivo
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `${API_BASE}/reports/export-${format}`;
+    form.target = '_blank';
+    
+    // Agregar CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    form.appendChild(csrfInput);
+    
+    // Agregar tipo de reporte
+    const typeInput = document.createElement('input');
+    typeInput.type = 'hidden';
+    typeInput.name = 'type';
+    typeInput.value = currentReport;
+    form.appendChild(typeInput);
+    
+    // Agregar al body, enviar y eliminar
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+    
+    setTimeout(() => {
+        showNotification(`✅ Reporte descargado en ${format.toUpperCase()}`);
+    }, 1000);
+}
+</script>
+
+</body>
+</html>

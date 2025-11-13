@@ -2,21 +2,28 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
-    protected $table = 'roles';
-    protected $primaryKey = 'rol_id';
+    use HasFactory;
+
+    protected $table = 'public.roles';
+    protected $primaryKey = 'id';
     protected $keyType = 'int';
     public $incrementing = true;
     public $timestamps = false;
 
-    protected $fillable = ['nombre', 'descripcion', 'privilegios', 'activo', 'fecha_creacion'];
+    protected $fillable = ['name', 'description'];
 
     public function users()
     {
-        // pivot may or may not exist; keep relation for when present
-        return $this->belongsToMany(User::class, 'role_user', 'role_id', 'user_id');
+        return $this->belongsToMany(
+            User::class, 
+            'public.role_user', 
+            'role_id',    // Esta debe ser 'rol_id' si es diferente en tu DB
+            'user_id'
+        );
     }
 }

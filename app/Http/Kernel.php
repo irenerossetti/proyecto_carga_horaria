@@ -39,5 +39,6 @@ class Kernel extends HttpKernel
         // Only register the custom aliases here; other middleware aliases are left to the app defaults
         'ensure.admin' => \App\Http\Middleware\EnsureAdmin::class,
         'ensure.teacher_or_admin' => \App\Http\Middleware\EnsureTeacherOrAdmin::class,
+        'role' => \App\Http\Middleware\CheckRole::class,
     ];
 }

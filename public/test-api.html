@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API Periods</title>
+</head>
+<body>
+    <h1>Test API Periods</h1>
+    <button onclick="testAPI()">Test GET /api/periods</button>
+    <button onclick="testCreate()">Test POST /api/periods</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('result');
+            result.textContent = 'Cargando...';
+            
+            try {
+                const response = await fetch('/api/periods', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function testCreate() {
+            const result = document.getElementById('result');
+            result.textContent = 'Creando...';
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 'NO-TOKEN';
+            
+            try {
+                const response = await fetch('/api/periods', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        code: 'TEST-' + Date.now(),
+                        name: 'Test Period',
+                        description: 'Test description',
+                        start_date: '2025-01-01',
+                        end_date: '2025-06-30'
+                    })
+                });
+                
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,185 +1,306 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Volt;
+
+// Controladores de Autenticación y Vistas
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\DocenteController;
+use App\Http\Controllers\CoordinatorDashboardController;
+use App\Http\Controllers\StudentDashboardController;
+
+// Controladores API (Casos de Uso)
 use App\Http\Controllers\AcademicPeriodController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\ImportController;
+use App\Http\Controllers\TeacherAssignmentController;
+use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\ScheduleGeneratorController;
+use App\Http\Controllers\ClassCancellationController;
+use App\Http\Controllers\ConflictController;
+use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AttendanceReportController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\SystemParameterController;
+use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\IncidentController;
 
-Route::get('/', function () {
+// ============================================================
+// RUTAS PÚBLICAS
+// ============================================================
+
+Route::redirect('/', '/login');
+
+Route::get('/welcome', function () {
     return view('welcome');
 })->name('home');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+// Rutas de autenticación (Públicas / Guest)
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login')->middleware('guest');
 
-Route::middleware(['auth'])->group(function () {
-    Route::redirect('settings', 'settings/profile');
+Route::post('/login', [LoginController::class, 'authenticate'])->middleware('guest');
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
-    Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
-    Volt::route('settings/password', 'settings.password')->name('user-password.edit');
-    Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
-
-    // Two-factor authentication settings removed — route intentionally omitted.
-});
-
-// Ruta para acceder rápidamente a la documentación Swagger UI
+// ============================================================
+// RUTAS SWAGGER Y OPENAPI (Públicas)
+// ============================================================
 Route::get('/swagger', function () {
     return redirect('/api/documentation');
 })->name('swagger.ui');
 
-// Servir el archivo YAML directamente (útil para herramientas externas)
 Route::get('/openapi.yaml', function () {
     return response()->file(base_path('docs/openapi.yaml'));
 });
 
-// API endpoints mínimos para CU04 - Gestión de Periodo Académico
-Route::prefix('api')->middleware(['auth'])->group(function () {
-    // Listar y crear periodos (solo admin comprobado en controller)
-    Route::get('periods', [AcademicPeriodController::class, 'index']);
-    Route::post('periods', [AcademicPeriodController::class, 'store']);
 
-    // Activar y cerrar un periodo
-    Route::post('periods/{id}/activate', [AcademicPeriodController::class, 'activate']);
-    Route::post('periods/{id}/close', [AcademicPeriodController::class, 'close']);
-    
-    // Actualizar y eliminar periodo
-    Route::patch('periods/{id}', [AcademicPeriodController::class, 'update']);
-    Route::delete('periods/{id}', [AcademicPeriodController::class, 'destroy']);
+// ============================================================
+// RUTAS PROTEGIDAS (Requieren autenticación)
+// ============================================================
+Route::middleware(['auth'])->group(function () {
 
-    // CU05 - Roles
-    Route::get('roles', [RoleController::class, 'index']);
-    Route::post('roles', [RoleController::class, 'store']);
-    // Editar y eliminar rol
-    Route::patch('roles/{id}', [RoleController::class, 'update']);
-    Route::delete('roles/{id}', [RoleController::class, 'destroy']);
-    Route::get('users/{id}/roles', [RoleController::class, 'getUserRoles']);
-    Route::post('users/{id}/roles', [RoleController::class, 'assignToUser']);
+    // --- Configuración de usuario (Volt) - Disponible para todos los usuarios autenticados ---
+    Route::redirect('settings', 'settings/profile');
+    Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
+    Volt::route('settings/password', 'settings.password')->name('user-password.edit');
+    Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
 
-    // CU06 - Teachers CRUD
-    Route::get('teachers', [TeacherController::class, 'index']);
-    Route::post('teachers', [TeacherController::class, 'store']);
-    Route::get('teachers/{id}', [TeacherController::class, 'show']);
-    Route::patch('teachers/{id}', [TeacherController::class, 'update']);
-    Route::delete('teachers/{id}', [TeacherController::class, 'destroy']);
-    // CU07 - Docente visualiza/edita su propio perfil
-    Route::get('teachers/me', [TeacherController::class, 'me']);
-    Route::patch('teachers/me', [TeacherController::class, 'updateMe']);
+    // --- Dashboard principal con redirección según rol ---
+    Route::get('/dashboard', function () {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        if (!$user) {
+            Auth::logout();
+            return redirect('/login')->with('error', 'Sesión inválida.');
+        }
 
-    // CU08 - Materias (Subjects) CRUD (admin)
-    Route::get('subjects', [\App\Http\Controllers\SubjectController::class, 'index']);
-    Route::post('subjects', [\App\Http\Controllers\SubjectController::class, 'store']);
-    Route::get('subjects/{id}', [\App\Http\Controllers\SubjectController::class, 'show']);
-    Route::patch('subjects/{id}', [\App\Http\Controllers\SubjectController::class, 'update']);
-    Route::delete('subjects/{id}', [\App\Http\Controllers\SubjectController::class, 'destroy']);
-    
-    // CU09 - Grupos (Groups) CRUD (admin)
-    Route::get('groups', [\App\Http\Controllers\GroupController::class, 'index']);
-    Route::post('groups', [\App\Http\Controllers\GroupController::class, 'store']);
-    Route::get('groups/{id}', [\App\Http\Controllers\GroupController::class, 'show']);
-    Route::patch('groups/{id}', [\App\Http\Controllers\GroupController::class, 'update']);
-    Route::delete('groups/{id}', [\App\Http\Controllers\GroupController::class, 'destroy']);
+        // CARGAR EXPLÍCITAMENTE LOS ROLES
+        $user->load('roles');
+        
+        // Verificar roles con carga explícita
+        $roles = $user->roles->pluck('name')->toArray();
+        
+        if (in_array('ADMIN', $roles)) {
+            return app(AdminDashboardController::class)->index();
+        } elseif (in_array('COORDINADOR', $roles)) {
+            return app(CoordinatorDashboardController::class)->index();
+        } elseif (in_array('DOCENTE', $roles)) {
+            return redirect()->route('docente.dashboard');
+        } elseif (in_array('ESTUDIANTE', $roles)) {
+            return app(StudentDashboardController::class)->index();
+        } else {
+            Auth::logout();
+            return redirect('/login')->with('error', 'No tienes un rol asignado.');
+        }
+    })->name('dashboard');
 
-    // CU10 - Aulas (Rooms) CRUD (admin)
-    Route::get('rooms', [\App\Http\Controllers\RoomController::class, 'index']);
-    Route::post('rooms', [\App\Http\Controllers\RoomController::class, 'store']);
-    Route::get('rooms/{id}', [\App\Http\Controllers\RoomController::class, 'show']);
-    Route::patch('rooms/{id}', [\App\Http\Controllers\RoomController::class, 'update']);
-    Route::delete('rooms/{id}', [\App\Http\Controllers\RoomController::class, 'destroy']);
-    // CU11 - Equipamiento de aulas
-    Route::get('rooms/{id}/equipment', [\App\Http\Controllers\RoomController::class, 'equipment']);
-    Route::put('rooms/{id}/equipment', [\App\Http\Controllers\RoomController::class, 'updateEquipment']);
-    // CU21 - Consultar aulas disponibles (docente/admin)
-    Route::get('rooms/available', [\App\Http\Controllers\RoomController::class, 'available'])->middleware('ensure.teacher_or_admin');
+    // ============================================================
+    // RUTAS ADMINISTRADOR - Acceso completo a toda la gestión
+    // ============================================================
+    Route::middleware(['role:ADMIN'])->group(function () {
+        // Vistas web de gestión
+        Route::get('/periodos', [AcademicPeriodController::class, 'webIndex'])->name('periods.index');
+        Route::get('/docentes', function() { return view('admin.teachers'); })->name('teachers.index');
+        Route::get('/estudiantes', function() { return view('admin.students'); })->name('students.index');
+        Route::get('/aulas', function() { return view('admin.rooms'); })->name('rooms.index');
+        Route::get('/reportes', function() { return view('admin.reports'); })->name('reports.index');
+        Route::get('/configuracion', function() { return view('admin.settings'); })->name('settings.index');
+    });
 
-    // CU12 - Importar datos masivos (CSV)
-    Route::post('imports', [\App\Http\Controllers\ImportController::class, 'import']);
+    // ============================================================
+    // RUTAS COORDINADOR - Gestión limitada (docentes, aulas, materias)
+    // ============================================================
+    Route::middleware(['role:COORDINADOR'])->group(function () {
+        // El coordinador puede acceder a funciones limitadas de gestión
+        // Por ahora solo tiene el dashboard, más adelante se agregarán vistas específicas
+    });
 
-    // CU13 - Asignar carga horaria a docente (CRUD)
-    Route::get('teachers/{id}/assignments', [\App\Http\Controllers\TeacherAssignmentController::class, 'index']);
-    Route::post('teachers/{id}/assignments', [\App\Http\Controllers\TeacherAssignmentController::class, 'store']);
-    Route::get('assignments', [\App\Http\Controllers\TeacherAssignmentController::class, 'index']);
-    Route::get('assignments/{id}', [\App\Http\Controllers\TeacherAssignmentController::class, 'show']);
-    Route::patch('assignments/{id}', [\App\Http\Controllers\TeacherAssignmentController::class, 'update']);
-    Route::delete('assignments/{id}', [\App\Http\Controllers\TeacherAssignmentController::class, 'destroy']);
+    // ============================================================
+    // RUTAS DOCENTE - Asistencia y clases virtuales
+    // ============================================================
+    Route::middleware(['role:DOCENTE'])->prefix('docente')->name('docente.')->group(function () {
+        Route::get('/dashboard', [DocenteController::class, 'dashboard'])->name('dashboard');
+        Route::post('/asistencia/{schedule}', [DocenteController::class, 'marcarAsistencia'])->name('asistencia.store');
+        Route::post('/clase/{schedule}/virtual', [DocenteController::class, 'cambiarVirtual'])->name('clase.virtual');
+    });
 
-    // CU14 - Asignar horarios manual (CRUD) con validación de conflictos
-    Route::get('schedules', [\App\Http\Controllers\ScheduleController::class, 'index']);
-    Route::post('schedules', [\App\Http\Controllers\ScheduleController::class, 'store']);
-    Route::get('schedules/{id}', [\App\Http\Controllers\ScheduleController::class, 'show']);
-    Route::patch('schedules/{id}', [\App\Http\Controllers\ScheduleController::class, 'update']);
-    Route::delete('schedules/{id}', [\App\Http\Controllers\ScheduleController::class, 'destroy']);
-    // CU15 - Generar horario automáticamente
-    Route::post('schedules/generate', [\App\Http\Controllers\ScheduleGeneratorController::class, 'generate'])->middleware('ensure.admin');
+    // ============================================================
+    // RUTAS ESTUDIANTE - Solo visualización
+    // ============================================================
+    Route::middleware(['role:ESTUDIANTE'])->prefix('estudiante')->name('estudiante.')->group(function () {
+        // Por ahora solo dashboard, en el futuro: ver horarios, materias inscritas, etc.
+    });
 
-    // CU16 - Visualizar horario semanal (por docente o por grupo)
-    Route::get('schedules/weekly', [\App\Http\Controllers\ScheduleController::class, 'weekly'])->middleware('ensure.teacher_or_admin');
-    Route::get('schedules/export', [\App\Http\Controllers\ScheduleController::class, 'export'])->middleware('ensure.teacher_or_admin');
-    // Export PDF
-    Route::get('schedules/export.pdf', [\App\Http\Controllers\ScheduleController::class, 'exportPdf'])->middleware('ensure.teacher_or_admin');
-    // CU18b - Generate signed QR for a schedule (teacher/admin). Returns PNG
-    Route::get('schedules/{id}/qrcode', [\App\Http\Controllers\ScheduleController::class, 'generateQr'])->middleware('ensure.teacher_or_admin');
-    // CU19 - Anular clase / cambiar a virtual (Docente/Admin)
-    Route::post('schedules/{id}/cancel', [\App\Http\Controllers\ScheduleController::class, 'cancel'])->middleware('ensure.teacher_or_admin');
-    // CU19 - Listar/consultar anulaciones
-    Route::get('cancellations', [\App\Http\Controllers\ClassCancellationController::class, 'index'])->middleware('ensure.teacher_or_admin');
-    Route::get('cancellations/{id}', [\App\Http\Controllers\ClassCancellationController::class, 'show'])->middleware('ensure.teacher_or_admin');
-    Route::delete('cancellations/{id}', [\App\Http\Controllers\ClassCancellationController::class, 'destroy'])->middleware('ensure.admin');
+    // ============================================================
+    // API ENDPOINTS (CU04 - CU31) - AHORA PROTEGIDAS
+    // ============================================================
+    Route::prefix('api')->group(function () {
 
-    // CU20 - Panel de conflictos horarios (Admin)
-    Route::get('conflicts', [\App\Http\Controllers\ConflictController::class, 'index'])->middleware('ensure.admin');
-    // Resolver/Marcar conflicto
-    Route::post('conflicts', [\App\Http\Controllers\ConflictController::class, 'store'])->middleware('ensure.admin');
+        // CU04 - Gestión de Periodo Académico
+        Route::get('periods', [AcademicPeriodController::class, 'index']);
+        Route::post('periods', [AcademicPeriodController::class, 'store']);
+        Route::post('periods/{id}/activate', [AcademicPeriodController::class, 'activate']);
+        Route::post('periods/{id}/close', [AcademicPeriodController::class, 'close']);
+        Route::patch('periods/{id}', [AcademicPeriodController::class, 'update']);
+        Route::delete('periods/{id}', [AcademicPeriodController::class, 'destroy']);
 
-    // CU22 - Consultar y reservar aulas liberadas
-    Route::get('reservations/available', [\App\Http\Controllers\ReservationController::class, 'available'])->middleware('ensure.teacher_or_admin');
-    Route::post('reservations', [\App\Http\Controllers\ReservationController::class, 'store'])->middleware('ensure.teacher_or_admin');
-    Route::get('reservations', [\App\Http\Controllers\ReservationController::class, 'index'])->middleware('ensure.teacher_or_admin');
+        // CU05 - Roles
+        Route::get('roles', [RoleController::class, 'index']);
+        Route::post('roles', [RoleController::class, 'store']);
+        Route::patch('roles/{id}', [RoleController::class, 'update']);
+        Route::delete('roles/{id}', [RoleController::class, 'destroy']);
+        Route::get('users/{id}/roles', [RoleController::class, 'getUserRoles']);
+        Route::post('users/{id}/roles', [RoleController::class, 'assignToUser']);
 
-    // CU23 - Panel admin
-    Route::get('admin/dashboard', [\App\Http\Controllers\AdminDashboardController::class, 'index'])->middleware('ensure.admin');
+        // CU06 - Teachers CRUD
+        Route::get('teachers', [TeacherController::class, 'index']);
+        Route::post('teachers', [TeacherController::class, 'store']);
+        Route::get('teachers/{id}', [TeacherController::class, 'show']);
+        Route::patch('teachers/{id}', [TeacherController::class, 'update']);
+        Route::delete('teachers/{id}', [TeacherController::class, 'destroy']);
 
-    // CU24 - Asistencia por docente
-    Route::get('reports/attendances/teacher/{id}', [\App\Http\Controllers\AttendanceReportController::class, 'byTeacher'])->middleware('ensure.admin');
+        // CU07 - Docente visualiza/edita su propio perfil
+        Route::get('teachers/me', [TeacherController::class, 'me']);
+        Route::patch('teachers/me', [TeacherController::class, 'updateMe']);
 
-    // CU25 - Asistencia por grupo
-    Route::get('reports/attendances/group/{id}', [\App\Http\Controllers\AttendanceReportController::class, 'byGroup'])->middleware('ensure.teacher_or_admin');
+        // Students CRUD
+        Route::get('students', [\App\Http\Controllers\StudentController::class, 'index']);
+        Route::post('students', [\App\Http\Controllers\StudentController::class, 'store']);
+        Route::patch('students/{id}', [\App\Http\Controllers\StudentController::class, 'update']);
+        Route::delete('students/{id}', [\App\Http\Controllers\StudentController::class, 'destroy']);
 
-    // CU26 - Generar reporte de horarios (PDF/Excel)
-    Route::get('reports/schedules', [\App\Http\Controllers\ReportController::class, 'schedules'])->middleware('ensure.teacher_or_admin');
+        // CU08 - Materias (Subjects) CRUD
+        Route::get('subjects', [SubjectController::class, 'index']);
+        Route::post('subjects', [SubjectController::class, 'store']);
+        Route::get('subjects/{id}', [SubjectController::class, 'show']);
+        Route::patch('subjects/{id}', [SubjectController::class, 'update']);
+        Route::delete('subjects/{id}', [SubjectController::class, 'destroy']);
 
-    // CU27 - Generar reporte de asistencia (PDF/Excel)
-    Route::get('reports/attendances', [\App\Http\Controllers\ReportController::class, 'attendances'])->middleware('ensure.teacher_or_admin');
+        // CU09 - Grupos (Groups) CRUD
+        Route::get('groups', [GroupController::class, 'index']);
+        Route::post('groups', [GroupController::class, 'store']);
+        Route::get('groups/{id}', [GroupController::class, 'show']);
+        Route::patch('groups/{id}', [GroupController::class, 'update']);
+        Route::delete('groups/{id}', [GroupController::class, 'destroy']);
 
-    // CU28 - Generar reporte de carga horaria (PDF/Excel)
-    Route::get('reports/workload', [\App\Http\Controllers\ReportController::class, 'workload'])->middleware('ensure.teacher_or_admin');
+        // CU10 - Aulas (Rooms) CRUD
+        Route::get('rooms', [RoomController::class, 'index']);
+        Route::post('rooms', [RoomController::class, 'store']);
+        Route::get('rooms/{id}', [RoomController::class, 'show']);
+        Route::patch('rooms/{id}', [RoomController::class, 'update']);
+        Route::delete('rooms/{id}', [RoomController::class, 'destroy']);
 
-    // CU17 - Registrar asistencia docente (CRUD)
-    Route::get('attendances', [\App\Http\Controllers\AttendanceController::class, 'index'])->middleware('ensure.teacher_or_admin');
-    Route::post('attendances', [\App\Http\Controllers\AttendanceController::class, 'store'])->middleware('ensure.teacher_or_admin');
-    // CU18 - Registrar asistencia mediante QR (Docente/Admin)
-    Route::post('attendances/qr', [\App\Http\Controllers\AttendanceController::class, 'registerQr'])->middleware('ensure.teacher_or_admin');
-    Route::get('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'show'])->middleware('ensure.teacher_or_admin');
-    Route::patch('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'update'])->middleware('ensure.teacher_or_admin');
-    Route::delete('attendances/{id}', [\App\Http\Controllers\AttendanceController::class, 'destroy'])->middleware('ensure.admin');
+        // CU11 - Equipamiento de aulas
+        Route::get('rooms/{id}/equipment', [RoomController::class, 'equipment']);
+        Route::put('rooms/{id}/equipment', [RoomController::class, 'updateEquipment']);
 
-    // CU29 - Configurar parámetros del sistema (Admin)
-    Route::get('system-parameters', [\App\Http\Controllers\SystemParameterController::class, 'index'])->middleware('ensure.admin');
-    Route::get('system-parameters/{key}', [\App\Http\Controllers\SystemParameterController::class, 'show'])->middleware('ensure.admin');
-    Route::post('system-parameters', [\App\Http\Controllers\SystemParameterController::class, 'store'])->middleware('ensure.admin');
+        // CU21 - Consultar aulas disponibles
+        Route::get('rooms/available', [RoomController::class, 'available'])->middleware('ensure.teacher_or_admin');
 
-    // CU30 - Anuncios generales
-    Route::get('announcements', [\App\Http\Controllers\AnnouncementController::class, 'index'])->middleware('ensure.teacher_or_admin');
-    Route::post('announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->middleware('ensure.admin');
-    Route::get('announcements/{id}', [\App\Http\Controllers\AnnouncementController::class, 'show'])->middleware('ensure.teacher_or_admin');
-    Route::patch('announcements/{id}', [\App\Http\Controllers\AnnouncementController::class, 'update'])->middleware('ensure.admin');
-    Route::delete('announcements/{id}', [\App\Http\Controllers\AnnouncementController::class, 'destroy'])->middleware('ensure.admin');
+        // CU12 - Importar datos masivos (CSV)
+        Route::post('imports', [ImportController::class, 'import']);
 
-    // CU31 - Incidencias en aulas
-    Route::get('incidents', [\App\Http\Controllers\IncidentController::class, 'index'])->middleware('ensure.teacher_or_admin');
-    Route::post('incidents', [\App\Http\Controllers\IncidentController::class, 'store'])->middleware('ensure.teacher_or_admin');
-    Route::get('incidents/{id}', [\App\Http\Controllers\IncidentController::class, 'show'])->middleware('ensure.teacher_or_admin');
-    Route::patch('incidents/{id}', [\App\Http\Controllers\IncidentController::class, 'update'])->middleware('ensure.teacher_or_admin');
-});
+        // CU13 - Asignar carga horaria a docente
+        Route::get('teachers/{id}/assignments', [TeacherAssignmentController::class, 'index']);
+        Route::post('teachers/{id}/assignments', [TeacherAssignmentController::class, 'store']);
+        Route::get('assignments', [TeacherAssignmentController::class, 'index']);
+        Route::get('assignments/{id}', [TeacherAssignmentController::class, 'show']);
+        Route::patch('assignments/{id}', [TeacherAssignmentController::class, 'update']);
+        Route::delete('assignments/{id}', [TeacherAssignmentController::class, 'destroy']);
+
+        // CU14 - Asignar horarios manual
+        Route::get('schedules', [ScheduleController::class, 'index']);
+        Route::post('schedules', [ScheduleController::class, 'store']);
+        Route::get('schedules/{id}', [ScheduleController::class, 'show']);
+        Route::patch('schedules/{id}', [ScheduleController::class, 'update']);
+        Route::delete('schedules/{id}', [ScheduleController::class, 'destroy']);
+
+        // CU15 - Generar horario automáticamente
+        Route::post('schedules/generate', [ScheduleGeneratorController::class, 'generate'])->middleware('ensure.admin');
+
+        // CU16 - Visualizar horario semanal
+        Route::get('schedules/weekly', [ScheduleController::class, 'weekly'])->middleware('ensure.teacher_or_admin');
+        Route::get('schedules/export', [ScheduleController::class, 'export'])->middleware('ensure.teacher_or_admin');
+        Route::get('schedules/export.pdf', [ScheduleController::class, 'exportPdf'])->middleware('ensure.teacher_or_admin');
+        Route::get('schedules/{id}/qrcode', [ScheduleController::class, 'generateQr'])->middleware('ensure.teacher_or_admin');
+
+        // CU19 - Anular clase / cambiar a virtual
+        Route::post('schedules/{id}/cancel', [ScheduleController::class, 'cancel'])->middleware('ensure.teacher_or_admin');
+        Route::get('cancellations', [ClassCancellationController::class, 'index'])->middleware('ensure.teacher_or_admin');
+        Route::get('cancellations/{id}', [ClassCancellationController::class, 'show'])->middleware('ensure.teacher_or_admin');
+        Route::delete('cancellations/{id}', [ClassCancellationController::class, 'destroy'])->middleware('ensure.admin');
+
+        // CU20 - Panel de conflictos horarios
+        Route::get('conflicts', [ConflictController::class, 'index'])->middleware('ensure.admin');
+        Route::post('conflicts', [ConflictController::class, 'store'])->middleware('ensure.admin');
+
+        // CU22 - Consultar y reservar aulas liberadas
+        Route::get('reservations/available', [ReservationController::class, 'available'])->middleware('ensure.teacher_or_admin');
+        Route::post('reservations', [ReservationController::class, 'store'])->middleware('ensure.teacher_or_admin');
+        Route::get('reservations', [ReservationController::class, 'index'])->middleware('ensure.teacher_or_admin');
+
+        // CU23 - Panel admin
+        Route::get('admin/dashboard', [AdminDashboardController::class, 'index'])->middleware('ensure.admin');
+
+        // CU24 - Asistencia por docente
+        Route::get('reports/attendances/teacher/{id}', [AttendanceReportController::class, 'byTeacher'])->middleware('ensure.admin');
+
+        // CU25 - Asistencia por grupo
+        Route::get('reports/attendances/group/{id}', [AttendanceReportController::class, 'byGroup'])->middleware('ensure.teacher_or_admin');
+
+        // CU26 - Reporte de horarios
+        Route::get('reports/schedules', [ReportController::class, 'schedules'])->middleware('ensure.teacher_or_admin');
+
+        // CU27 - Reporte de asistencia
+        Route::get('reports/attendances', [ReportController::class, 'attendances'])->middleware('ensure.teacher_or_admin');
+
+        // CU28 - Reporte de carga horaria
+        Route::get('reports/workload', [ReportController::class, 'workload'])->middleware('ensure.teacher_or_admin');
+        
+        // Reportes adicionales
+        Route::get('reports/teacher-workload', [ReportController::class, 'teacherWorkload']);
+        Route::get('reports/teacher-attendance', [ReportController::class, 'teacherAttendance']);
+        Route::get('reports/weekly-schedule', [ReportController::class, 'weeklySchedule']);
+        Route::get('reports/available-rooms', [ReportController::class, 'availableRooms']);
+        Route::get('reports/group-attendance', [ReportController::class, 'groupAttendance']);
+        Route::get('reports/general-stats', [ReportController::class, 'generalStats']);
+        Route::post('reports/export-pdf', [ReportController::class, 'exportPdf']);
+        Route::post('reports/export-excel', [ReportController::class, 'exportExcel']);
+
+        // CU17 - Registrar asistencia docente
+        Route::get('attendances', [AttendanceController::class, 'index'])->middleware('ensure.teacher_or_admin');
+        Route::post('attendances', [AttendanceController::class, 'store'])->middleware('ensure.teacher_or_admin');
+        Route::post('attendances/qr', [AttendanceController::class, 'registerQr'])->middleware('ensure.teacher_or_admin');
+        Route::get('attendances/{id}', [AttendanceController::class, 'show'])->middleware('ensure.teacher_or_admin');
+        Route::patch('attendances/{id}', [AttendanceController::class, 'update'])->middleware('ensure.teacher_or_admin');
+        Route::delete('attendances/{id}', [AttendanceController::class, 'destroy'])->middleware('ensure.admin');
+
+        // CU29 - Configurar parámetros del sistema
+        Route::get('system-parameters', [SystemParameterController::class, 'index'])->middleware('ensure.admin');
+        Route::get('system-parameters/{key}', [SystemParameterController::class, 'show'])->middleware('ensure.admin');
+        Route::post('system-parameters', [SystemParameterController::class, 'store'])->middleware('ensure.admin');
+
+        // CU30 - Anuncios generales
+        Route::get('announcements', [AnnouncementController::class, 'index'])->middleware('ensure.teacher_or_admin');
+        Route::post('announcements', [AnnouncementController::class, 'store'])->middleware('ensure.admin');
+        Route::get('announcements/{id}', [AnnouncementController::class, 'show'])->middleware('ensure.teacher_or_admin');
+        Route::patch('announcements/{id}', [AnnouncementController::class, 'update'])->middleware('ensure.admin');
+        Route::delete('announcements/{id}', [AnnouncementController::class, 'destroy'])->middleware('ensure.admin');
+
+        // CU31 - Incidencias en aulas
+        Route::get('incidents', [IncidentController::class, 'index'])->middleware('ensure.teacher_or_admin');
+        Route::post('incidents', [IncidentController::class, 'store'])->middleware('ensure.teacher_or_admin');
+        Route::get('incidents/{id}', [IncidentController::class, 'show'])->middleware('ensure.teacher_or_admin');
+        Route::patch('incidents/{id}', [IncidentController::class, 'update'])->middleware('ensure.teacher_or_admin');
+    }); // <-- FIN DEL PREFIJO API
+
+}); // <-- ESTA ES LA LLAVE DE CIERRE PRINCIPAL DEL MIDDLEWARE 'AUTH'

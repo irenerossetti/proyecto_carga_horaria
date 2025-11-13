@@ -6,22 +6,31 @@ use Illuminate\Database\Eloquent\Model;
 
 class TeacherAssignment extends Model
 {
-    protected $table = 'teacher_assignments';
+    protected $table = 'public.teacher_assignments';
+    protected $fillable = ['teacher_id', 'group_id', 'academic_period_id'];
+    public $timestamps = false;
 
-    protected $fillable = ['teacher_id','subject_id','group_id','period_id','assigned_by'];
-
+    /**
+     * Relación inversa con Teacher (una asignación pertenece a un Docente)
+     */
     public function teacher()
     {
         return $this->belongsTo(Teacher::class, 'teacher_id');
     }
 
-    public function subject()
-    {
-        return $this->belongsTo(Subject::class, 'subject_id');
-    }
-
+    /**
+     * Relación inversa con Group (una asignación pertenece a un Grupo)
+     */
     public function group()
     {
         return $this->belongsTo(Group::class, 'group_id');
+    }
+
+    /**
+     * Relación uno a muchos con Schedule (una asignación tiene muchos horarios)
+     */
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'assignment_id');
     }
 }

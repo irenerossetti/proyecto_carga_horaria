@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Group extends Model
 {
-    protected $table = 'groups';
+    // --- ¡AQUÍ ESTÁ EL ARREGLO! ---
+    // Añadimos 'public.' al nombre de la tabla
+    protected $table = 'public.groups';
 
     protected $fillable = [
         'subject_id',
@@ -15,4 +17,14 @@ class Group extends Model
         'capacity',
         'schedule',
     ];
+
+    /**
+     * Define la relación con la Materia (Subject).
+     * Esto es necesario para que el dashboard pueda mostrar el nombre de la materia.
+     */
+    public function subject()
+    {
+        // Asegúrate que el modelo Subject también apunte a 'public.subjects'
+        return $this->belongsTo(Subject::class, 'subject_id');
+    }
 }

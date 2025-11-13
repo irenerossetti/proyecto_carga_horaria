@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Rooms API</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { padding: 10px; margin: 5px; cursor: pointer; background: #881F34; color: white; border: none; border-radius: 5px; }
+        button:hover { background: #6d1829; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; max-height: 400px; }
+        input, select { padding: 5px; margin: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Test Rooms CRUD API</h1>
+    
+    <div class="section">
+        <h2>1. Listar Aulas</h2>
+        <button onclick="listRooms()">GET /api/rooms</button>
+        <pre id="list-result"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>2. Crear Aula</h2>
+        <input type="text" id="create-name" placeholder="Nombre" value="Aula Test">
+        <select id="create-location">
+            <option value="Piso 1">Piso 1</option>
+            <option value="Piso 2">Piso 2</option>
+            <option value="Piso 3">Piso 3</option>
+            <option value="Piso 4">Piso 4</option>
+        </select>
+        <input type="number" id="create-capacity" placeholder="Capacidad" value="40">
+        <input type="text" id="create-resources" placeholder="Recursos (separados por coma)" value="Proyector, Pizarra">
+        <button onclick="createRoom()">POST /api/rooms</button>
+        <pre id="create-result"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>3. Ver Aula</h2>
+        <input type="number" id="show-id" placeholder="ID del aula">
+        <button onclick="showRoom()">GET /api/rooms/{id}</button>
+        <pre id="show-result"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>4. Actualizar Aula</h2>
+        <input type="number" id="update-id" placeholder="ID del aula">
+        <input type="text" id="update-name" placeholder="Nuevo nombre">
+        <select id="update-location">
+            <option value="">Sin cambio</option>
+            <option value="Piso 1">Piso 1</option>
+            <option value="Piso 2">Piso 2</option>
+            <option value="Piso 3">Piso 3</option>
+            <option value="Piso 4">Piso 4</option>
+        </select>
+        <input type="number" id="update-capacity" placeholder="Nueva capacidad">
+        <input type="text" id="update-resources" placeholder="Nuevos recursos">
+        <button onclick="updateRoom()">PATCH /api/rooms/{id}</button>
+        <pre id="update-result"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>5. Eliminar Aula</h2>
+        <input type="number" id="delete-id" placeholder="ID del aula">
+        <button onclick="deleteRoom()">DELETE /api/rooms/{id}</button>
+        <pre id="delete-result"></pre>
+    </div>
+    
+    <script>
+        const API_BASE = '/api';
+        
+        async function listRooms() {
+            try {
+                const response = await fetch(`${API_BASE}/rooms`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+                document.getElementById('list-result').textContent = JSON.stringify(data, null, 2);
+                document.getElementById('list-result').className = 'success';
+            } catch (error) {
+                document.getElementById('list-result').textContent = 'Error: ' + error.message;
+                document.getElementById('list-result').className = 'error';
+            }
+        }
+        
+        async function createRoom() {
+            try {
+                const resources = document.getElementById('create-resources').value
+                    .split(',').map(r => r.trim()).filter(r => r);
+                
+                const data = {
+                    name: document.getElementById('create-name').value,
+                    location: document.getElementById('create-location').value,
+                    capacity: parseInt(document.getElementById('create-capacity').value),
+                    resources: JSON.stringify(resources)
+                };
+                
+                console.log('Creating room:', data);
+                
+                const response = await fetch(`${API_BASE}/rooms`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                document.getElementById('create-result').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('create-result').className = response.ok ? 'success' : 'error';
+            } catch (error) {
+                document.getElementById('create-result').textContent = 'Error: ' + error.message;
+                document.getElementById('create-result').className = 'error';
+            }
+        }
+        
+        async function showRoom() {
+            try {
+                const id = document.getElementById('show-id').value;
+                const response = await fetch(`${API_BASE}/rooms/${id}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+                document.getElementById('show-result').textContent = JSON.stringify(data, null, 2);
+                document.getElementById('show-result').className = response.ok ? 'success' : 'error';
+            } catch (error) {
+                document.getElementById('show-result').textContent = 'Error: ' + error.message;
+                document.getElementById('show-result').className = 'error';
+            }
+        }
+        
+        async function updateRoom() {
+            try {
+                const id = document.getElementById('update-id').value;
+                const data = {};
+                
+                const name = document.getElementById('update-name').value;
+                const location = document.getElementById('update-location').value;
+                const capacity = document.getElementById('update-capacity').value;
+                const resources = document.getElementById('update-resources').value;
+                
+                if (name) data.name = name;
+                if (location) data.location = location;
+                if (capacity) data.capacity = parseInt(capacity);
+                if (resources) {
+                    const resourcesArray = resources.split(',').map(r => r.trim()).filter(r => r);
+                    data.resources = JSON.stringify(resourcesArray);
+                }
+                
+                console.log('Updating room:', id, data);
+                
+                const response = await fetch(`${API_BASE}/rooms/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                document.getElementById('update-result').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('update-result').className = response.ok ? 'success' : 'error';
+            } catch (error) {
+                document.getElementById('update-result').textContent = 'Error: ' + error.message;
+                document.getElementById('update-result').className = 'error';
+            }
+        }
+        
+        async function deleteRoom() {
+            try {
+                const id = document.getElementById('delete-id').value;
+                if (!confirm('¿Seguro que quieres eliminar esta aula?')) return;
+                
+                const response = await fetch(`${API_BASE}/rooms/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    }
+                });
+                
+                const result = await response.json();
+                document.getElementById('delete-result').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('delete-result').className = response.ok ? 'success' : 'error';
+            } catch (error) {
+                document.getElementById('delete-result').textContent = 'Error: ' + error.message;
+                document.getElementById('delete-result').className = 'error';
+            }
+        }
+    </script>
+</body>
+</html>

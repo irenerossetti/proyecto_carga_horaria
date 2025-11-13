@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Disable transactions for this migration to avoid PostgreSQL transaction issues
+     */
+    public $withinTransaction = false;
+    
     public function up(): void
     {
         if (! Schema::hasTable('schedules')) {

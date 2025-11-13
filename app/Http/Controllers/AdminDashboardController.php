@@ -2,46 +2,141 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\User;
 use App\Models\Teacher;
 use App\Models\Room;
 use App\Models\Schedule;
-use App\Models\Attendance;
-use App\Models\Reservation;
-use App\Models\Conflict;
+use Illuminate\Support\Facades\Auth;
+// Modelos comentados porque las tablas no existen en Neon:
+// use App\Models\Subject;
+// use App\Models\Attendance;
+// use App\Models\Reservation;
+// use App\Models\Conflict;
 
 class AdminDashboardController extends Controller
 {
     /**
-     * @OA\Get(
-     *     path="/api/admin/dashboard",
-     *     summary="CU23 - Panel de Control Administrativo",
-     *     tags={"Admin"},
-     *     security={{"cookieAuth": {}}},
-     *     @OA\Response(response=200, description="Estadísticas resumidas para admin")
-     * )
+     * Muestra la vista del dashboard web con datos.
      */
-    public function index(Request $request)
+    public function index()
     {
-        $user = $request->user();
-        if (! $user || ! $user->hasRole('administrador')) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        // Verificar que el usuario esté autenticado
+        if (!Auth::check()) {
+            return redirect('/login');
         }
 
+        $user = Auth::user();
+        
+        // Verificar que el usuario tenga rol de ADMIN
+        if (!$user->hasRole('ADMIN')) {
+            Auth::logout();
+            return redirect('/login')->with('error', 'No tienes permisos de administrador.');
+        }
+
+        // 1. Obtenemos los datos
+        $data = $this->getDashboardData();
+
+        // 2. Retornamos la VISTA 'admin-dashboard' y le pasamos los datos
+        return view('admin-dashboard', $data);
+    }
+
+    /**
+     * Lógica centralizada para obtener las estadísticas.
+     */
+    private function getDashboardData(): array
+    {
         $totalTeachers = Teacher::count();
         $totalRooms = Room::count();
-        $totalSchedules = Schedule::count();
-        $todayAttendances = Attendance::whereDate('date', now()->toDateString())->count();
-        $openConflicts = Conflict::where('resolved', false)->count();
-        $activeReservations = Reservation::where('expires_at', '>', now())->count();
+        
+        // Contar materias - TABLA NO EXISTE EN LA BD
+        $totalSubjects = 0;
+        
+        // Contar estudiantes
+        $totalStudents = User::whereHas('roles', function($q) {
+            $q->where('name', 'ESTUDIANTE');
+        })->count();
 
-        return response()->json([
-            'total_teachers' => $totalTeachers,
-            'total_rooms' => $totalRooms,
-            'total_schedules' => $totalSchedules,
-            'today_attendances' => $todayAttendances,
-            'open_conflicts' => $openConflicts,
-            'active_reservations' => $activeReservations,
-        ]);
+        // Contar aulas libres hoy (sin horarios asignados en este momento)
+        $now = now();
+        $currentDay = $now->dayOfWeek; // 0=Domingo, 1=Lunes, etc.
+        $currentTime = $now->format('H:i:s');
+        
+        $busyRooms = Schedule::where('day_of_week', $currentDay)
+            ->where('start_time', '<=', $currentTime)
+            ->where('end_time', '>=', $currentTime)
+            ->whereNotNull('room_id')
+            ->distinct('room_id')
+            ->count('room_id');
+            
+        $freeRoomsToday = max(0, $totalRooms - $busyRooms);
+        
+        // Horarios totales
+        $totalSchedules = Schedule::count();
+        
+        // Asistencias de hoy (tabla NO EXISTE, retornar 0)
+        $todayAttendances = 0;
+        
+        // Conflictos abiertos (tabla NO EXISTE, retornar 0)
+        $openConflicts = 0;
+        
+        // Reservas activas (tabla NO EXISTE, retornar 0)
+        $activeReservations = 0;
+
+        // Mapeo de días
+        $daysMap = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+        $currentDayName = $daysMap[$currentDay] ?? null;
+
+        // Clases en curso y próximas (solo si hay horarios y día válido)
+        $upcomingSchedules = collect([]);
+        $currentClass = null;
+        
+        if ($currentDayName && $totalSchedules > 0) {
+            try {
+                $upcomingSchedules = Schedule::where('day_of_week', $currentDayName)
+                    ->where('start_time', '>=', $currentTime)
+                    ->with(['assignment.teacher.user', 'room'])
+                    ->orderBy('start_time', 'asc')
+                    ->take(3)
+                    ->get();
+
+                // Clase actual
+                $currentClass = Schedule::where('day_of_week', $currentDayName)
+                    ->where('start_time', '<=', $currentTime)
+                    ->where('end_time', '>=', $currentTime)
+                    ->with(['assignment.teacher.user', 'room'])
+                    ->first();
+            } catch (\Exception $e) {
+                \Log::warning('Error al obtener horarios: ' . $e->getMessage());
+            }
+        }
+
+        return [
+            'totalTeachers' => $totalTeachers,
+            'totalRooms' => $totalRooms,
+            'freeRoomsToday' => $freeRoomsToday,
+            'totalSubjects' => $totalSubjects,
+            'totalStudents' => $totalStudents,
+            'totalSchedules' => $totalSchedules,
+            'todayAttendances' => $todayAttendances,
+            'openConflicts' => $openConflicts,
+            'activeReservations' => $activeReservations,
+            'currentClass' => $currentClass,
+            'upcomingSchedules' => $upcomingSchedules,
+        ];
+    }
+
+    /**
+     * @OA\Get(
+     * path="/api/admin/dashboard",
+     * summary="CU23 - Panel de Control Administrativo (API)",
+     * tags={"Admin"},
+     * security={{"cookieAuth": {}}},
+     * @OA\Response(response=200, description="Estadísticas resumidas para admin (API)")
+     * )
+     */
+    public function indexApi()
+    {
+        // Esta función mantiene tu endpoint de API original por si lo necesitas
+        return response()->json($this->getDashboardData());
     }
 }
