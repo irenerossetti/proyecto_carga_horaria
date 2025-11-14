@@ -50,6 +50,15 @@ Route::get('/login', function () {
 Route::post('/login', [LoginController::class, 'authenticate'])->middleware('guest');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
+// Password Reset Routes
+Route::get('/forgot-password', function () {
+    return view('auth.forgot-password');
+})->name('password.request')->middleware('guest');
+
+Route::get('/reset-password', function () {
+    return view('auth.reset-password');
+})->name('password.reset')->middleware('guest');
+
 // ============================================================
 // RUTAS SWAGGER Y OPENAPI (Públicas)
 // ============================================================
@@ -111,7 +120,23 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/periodos', [AcademicPeriodController::class, 'webIndex'])->name('periods.index');
         Route::get('/docentes', function() { return view('admin.teachers'); })->name('teachers.index');
         Route::get('/estudiantes', function() { return view('admin.students'); })->name('students.index');
+        Route::get('/materias', function() { return view('admin.subjects'); })->name('subjects.index');
+        Route::get('/grupos', function() { return view('admin.groups'); })->name('groups.index');
         Route::get('/aulas', function() { return view('admin.rooms'); })->name('rooms.index');
+        Route::get('/importar', function() { return view('admin.imports'); })->name('imports.index');
+        Route::get('/asignaciones', function() { return view('admin.assignments'); })->name('assignments.index');
+        Route::get('/horarios', function() { return view('admin.schedules'); })->name('schedules.index');
+        Route::get('/horario-semanal', function() { return view('admin.weekly-schedule'); })->name('weekly-schedule.index');
+        Route::get('/asistencia', function() { return view('admin.attendance'); })->name('attendance.index');
+        Route::get('/asistencia-qr', function() { return view('admin.attendance-qr'); })->name('attendance-qr.index');
+        Route::get('/anulaciones', function() { return view('admin.cancellations'); })->name('cancellations.index');
+        Route::get('/conflictos', function() { return view('admin.conflicts'); })->name('conflicts.index');
+        Route::get('/aulas-disponibles', function() { return view('admin.available-rooms'); })->name('available-rooms.index');
+        Route::get('/reservas', function() { return view('admin.room-reservations'); })->name('reservations.index');
+        Route::get('/asistencia-docente', function() { return view('admin.attendance-by-teacher'); })->name('attendance-teacher.index');
+        Route::get('/asistencia-grupo', function() { return view('admin.attendance-by-group'); })->name('attendance-group.index');
+        Route::get('/anuncios', function() { return view('admin.announcements'); })->name('announcements.index');
+        Route::get('/incidencias', function() { return view('admin.incidents'); })->name('incidents.index');
         Route::get('/reportes', function() { return view('admin.reports'); })->name('reports.index');
         Route::get('/configuracion', function() { return view('admin.settings'); })->name('settings.index');
     });

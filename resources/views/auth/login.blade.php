@@ -51,6 +51,13 @@
                 </div>
             @endif
 
+            @if (request()->query('reset') === 'success')
+                <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 text-sm text-green-700">
+                    <p class="font-medium">✓ Contraseña restablecida exitosamente</p>
+                    <p class="mt-1">Ahora puedes iniciar sesión con tu nueva contraseña.</p>
+                </div>
+            @endif
+
             <form method="POST" action="/login">
                 @csrf
 
@@ -68,6 +75,9 @@
                         <label for="password" class="block text-sm font-medium text-gray-700">
                             Contraseña
                         </label>
+                        <a href="{{ route('password.request') }}" class="text-sm font-medium text-brand-primary hover:text-brand-hover transition-colors">
+                            ¿Olvidaste tu contraseña?
+                        </a>
                     </div>
                     <input type="password" name="password" id="password" required
                         class="w-full px-4 py-3 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 transition-all outline-none"
