@@ -252,18 +252,22 @@
                         Gestiona tus actividades académicas desde aquí.
                     </p>
                     <div class="space-y-3 relative z-10">
-                        <button class="w-full text-left flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-lg transition-colors">
+                        <a href="{{ route('docente.weekly-schedule') }}" class="w-full text-left flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-lg transition-colors">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                             <span>Ver Horario Semanal Completo</span>
-                        </button>
-                        <button class="w-full text-left flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-lg transition-colors">
+                        </a>
+                        <a href="{{ route('docente.attendance-history') }}" class="w-full text-left flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-lg transition-colors">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                            <span>Mis Reportes de Asistencia</span>
-                        </button>
-                         <button class="w-full text-left flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-lg transition-colors">
+                            <span>Historial de Asistencias</span>
+                        </a>
+                        <a href="{{ route('docente.report-incident') }}" class="w-full text-left flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-lg transition-colors">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                             <span>Reportar Incidencia en Aula</span>
-                        </button>
+                        </a>
+                        <a href="{{ route('docente.justifications') }}" class="w-full text-left flex items-center gap-3 bg-white/10 hover:bg-white/20 p-3 rounded-lg transition-colors">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            <span>Mis Justificaciones</span>
+                        </a>
                     </div>
                 </div>
 

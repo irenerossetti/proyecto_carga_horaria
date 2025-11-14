@@ -67,8 +67,11 @@
 <body class="h-full font-sans antialiased text-neutral-900 bg-neutral-100">
     <div class="flex h-screen overflow-hidden">
         
+        <!-- Overlay para móvil -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden"></div>
+        
         <!-- ===== SIDEBAR ===== -->
-        <div class="w-72 bg-[#1A1A1A] flex flex-col text-white flex-shrink-0 relative z-10">
+        <div id="sidebar" class="w-72 bg-[#1A1A1A] flex flex-col text-white flex-shrink-0 relative z-50 fixed lg:relative h-full transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
             <!-- Logo -->
             <div class="h-16 flex items-center px-6 border-b border-white/5">
                 <div class="flex items-center gap-3">
@@ -161,22 +164,56 @@
         </div>
 
         <!-- ===== CONTENIDO PRINCIPAL ===== -->
-        <div class="flex-1 flex flex-col overflow-hidden bg-neutral-50">
+        <div class="flex-1 flex flex-col overflow-hidden bg-neutral-50 w-full">
             <!-- Header -->
-            <header class="h-16 bg-white border-b border-neutral-200/80 flex items-center justify-between px-8 flex-shrink-0">
-                <h2 class="text-lg font-semibold text-neutral-900">@yield('header', 'Panel Administrativo')</h2>
-                <div class="flex items-center gap-4">
-                    <span class="text-sm text-neutral-500 font-medium">
+            <header class="h-16 bg-white border-b border-neutral-200/80 flex items-center justify-between px-4 sm:px-6 lg:px-8 flex-shrink-0">
+                <!-- Botón menú móvil -->
+                <button id="menuButton" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                
+                <h2 class="text-base sm:text-lg font-semibold text-neutral-900 truncate">@yield('header', 'Panel Administrativo')</h2>
+                
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <span class="text-xs sm:text-sm text-neutral-500 font-medium hidden sm:inline">
                         {{ date('d') }} de {{ ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][date('n')-1] }}, {{ date('Y') }}
                     </span>
                 </div>
             </header>
 
             <!-- Contenido de la página -->
-            <main class="flex-1 overflow-y-auto p-8">
+            <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                 @yield('content')
             </main>
         </div>
     </div>
+    
+    <!-- Script para menú móvil -->
+    <script>
+        const menuButton = document.getElementById('menuButton');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+        
+        menuButton?.addEventListener('click', toggleSidebar);
+        overlay?.addEventListener('click', toggleSidebar);
+        
+        // Cerrar sidebar al hacer clic en un enlace (solo móvil)
+        if (window.innerWidth < 1024) {
+            document.querySelectorAll('#sidebar a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+        }
+    </script>
 </body>
 </html>

@@ -135,18 +135,24 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reservas', function() { return view('admin.room-reservations'); })->name('reservations.index');
         Route::get('/asistencia-docente', function() { return view('admin.attendance-by-teacher'); })->name('attendance-teacher.index');
         Route::get('/asistencia-grupo', function() { return view('admin.attendance-by-group'); })->name('attendance-group.index');
+        Route::get('/carga-materia', function() { return view('admin.workload-by-subject'); })->name('workload-subject.index');
         Route::get('/anuncios', function() { return view('admin.announcements'); })->name('announcements.index');
         Route::get('/incidencias', function() { return view('admin.incidents'); })->name('incidents.index');
         Route::get('/reportes', function() { return view('admin.reports'); })->name('reports.index');
+        Route::get('/bitacora', function() { return view('admin.activity-log'); })->name('activity-log.index');
         Route::get('/configuracion', function() { return view('admin.settings'); })->name('settings.index');
     });
 
     // ============================================================
     // RUTAS COORDINADOR - Gestión limitada (docentes, aulas, materias)
     // ============================================================
-    Route::middleware(['role:COORDINADOR'])->group(function () {
-        // El coordinador puede acceder a funciones limitadas de gestión
-        // Por ahora solo tiene el dashboard, más adelante se agregarán vistas específicas
+    Route::middleware(['role:COORDINADOR'])->prefix('coordinador')->name('coordinator.')->group(function () {
+        // Validaciones
+        Route::get('/validar-carga', function() { return view('coordinator.workload-validation'); })->name('workload-validation');
+        Route::get('/validar-horarios', function() { return view('coordinator.schedule-validation'); })->name('schedule-validation');
+        
+        // Reportes
+        Route::get('/reportes-asistencia', function() { return view('coordinator.attendance-reports'); })->name('attendance-reports');
     });
 
     // ============================================================
@@ -156,6 +162,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [DocenteController::class, 'dashboard'])->name('dashboard');
         Route::post('/asistencia/{schedule}', [DocenteController::class, 'marcarAsistencia'])->name('asistencia.store');
         Route::post('/clase/{schedule}/virtual', [DocenteController::class, 'cambiarVirtual'])->name('clase.virtual');
+        
+        // Nuevas funcionalidades
+        Route::get('/reportar-incidencia', function() { return view('docente.report-incident'); })->name('report-incident');
+        Route::get('/justificaciones', function() { return view('docente.justifications'); })->name('justifications');
+        Route::get('/horario-semanal', function() { return view('docente.weekly-schedule'); })->name('weekly-schedule');
+        Route::get('/historial-asistencias', function() { return view('docente.attendance-history'); })->name('attendance-history');
     });
 
     // ============================================================
@@ -326,6 +338,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('incidents', [IncidentController::class, 'store'])->middleware('ensure.teacher_or_admin');
         Route::get('incidents/{id}', [IncidentController::class, 'show'])->middleware('ensure.teacher_or_admin');
         Route::patch('incidents/{id}', [IncidentController::class, 'update'])->middleware('ensure.teacher_or_admin');
+
+        // Bitácora del Sistema
+        Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->middleware('ensure.admin');
+        Route::get('activity-logs/stats', [\App\Http\Controllers\ActivityLogController::class, 'stats'])->middleware('ensure.admin');
+        Route::get('activity-logs/export-excel', [\App\Http\Controllers\ActivityLogController::class, 'exportExcel'])->middleware('ensure.admin');
+        Route::get('activity-logs/export-pdf', [\App\Http\Controllers\ActivityLogController::class, 'exportPdf'])->middleware('ensure.admin');
+        Route::delete('activity-logs/clear-old', [\App\Http\Controllers\ActivityLogController::class, 'clearOld'])->middleware('ensure.admin');
     }); // <-- FIN DEL PREFIJO API
 
 }); // <-- ESTA ES LA LLAVE DE CIERRE PRINCIPAL DEL MIDDLEWARE 'AUTH'

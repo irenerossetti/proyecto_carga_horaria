@@ -23,15 +23,15 @@
 <div class="flex min-h-screen">
     @include('layouts.admin-sidebar')
 
-    <main class="flex-1 ml-64 p-8">
+    <main class="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8">
         <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Panel Administrativo</h1>
-            <p class="text-gray-500 mt-1">Bienvenido al sistema de gestión académica</p>
+        <div class="mb-6 sm:mb-8">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Panel Administrativo</h1>
+            <p class="text-gray-500 mt-1 text-sm sm:text-base">Bienvenido al sistema de gestión académica</p>
         </div>
 
         <!-- Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <!-- Docentes Activos -->
             <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                 <div class="flex items-center justify-between">
