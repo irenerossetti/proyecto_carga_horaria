@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Importación</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #881F34;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px 20px;
+        }
+        button:hover {
+            background-color: #6d1829;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Importación</h1>
+    
+    <form id="importForm">
+        <div class="form-group">
+            <label for="type">Tipo de Importación:</label>
+            <select id="type" required>
+                <option value="">Seleccionar...</option>
+                <option value="teachers">Docentes</option>
+                <option value="subjects">Materias</option>
+                <option value="groups">Grupos</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="file">Archivo (Excel o CSV):</label>
+            <input type="file" id="file" accept=".xlsx,.xls,.csv" required>
+            <small>Formatos: .xlsx, .xls, .csv</small>
+        </div>
+        
+        <button type="submit">Importar Datos</button>
+    </form>
+    
+    <div id="result" style="display: none;"></div>
+    
+    <hr style="margin: 40px 0;">
+    
+    <h2>📋 Plantillas de Ejemplo</h2>
+    
+    <h3>Docentes (CSV)</h3>
+    <pre>name,email,dni,phone,department
+Juan Pérez,juan.perez@ficct.edu.bo,12345678,70123456,Sistemas
+María López,maria.lopez@ficct.edu.bo,87654321,70654321,Matemáticas</pre>
+    
+    <h3>Materias (CSV)</h3>
+    <pre>code,name,credits,description
+INF-101,Introducción a la Programación,4,Fundamentos de programación
+MAT-101,Cálculo I,4,Cálculo diferencial</pre>
+    
+    <h3>Grupos (CSV)</h3>
+    <pre>code,name,subject_id,capacity,schedule
+INF-101-A,Grupo A,1,30,Lun-Mie-Vie 08:00-10:00
+INF-101-B,Grupo B,1,30,Lun-Mie-Vie 14:00-16:00</pre>
+    
+    <script>
+        document.getElementById('importForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const type = document.getElementById('type').value;
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Por favor selecciona un archivo');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('type', type);
+            formData.append('file', file);
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = '';
+            resultDiv.innerHTML = '⏳ Procesando...';
+            
+            try {
+                const response = await fetch('/api/imports', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Importación Exitosa</h3>
+                        <p><strong>Creados:</strong> ${result.created}</p>
+                        <p><strong>Actualizados:</strong> ${result.updated}</p>
+                        <p><strong>Total exitosos:</strong> ${result.success_count}</p>
+                        <p><strong>Errores:</strong> ${result.error_count}</p>
+                        <p><strong>Total procesados:</strong> ${result.total_count}</p>
+                        ${result.errors && result.errors.length > 0 ? `
+                            <h4>Errores:</h4>
+                            <ul>
+                                ${result.errors.map(err => `<li>Fila ${err.row}: ${err.error}</li>`).join('')}
+                            </ul>
+                        ` : ''}
+                    `;
+                } else {
+                    throw new Error(result.message || 'Error en la importación');
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        });
+        
+        // Mostrar nombre del archivo seleccionado
+        document.getElementById('file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                console.log('Archivo seleccionado:', file.name, 'Tamaño:', file.size, 'bytes');
+            }
+        });
+    </script>
+</body>
+</html>

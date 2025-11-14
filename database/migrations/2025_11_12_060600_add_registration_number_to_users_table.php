@@ -7,13 +7,20 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
+     * Disable transactions for this migration
+     */
+    public $withinTransaction = false;
+    
+    /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('registration_number', 9)->nullable()->unique()->after('email');
-        });
+        if (!Schema::hasColumn('users', 'registration_number')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('registration_number', 9)->nullable()->unique()->after('email');
+            });
+        }
     }
 
     /**
@@ -21,8 +28,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('registration_number');
-        });
+        if (Schema::hasColumn('users', 'registration_number')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropColumn('registration_number');
+            });
+        }
     }
 };

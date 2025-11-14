@@ -123,6 +123,21 @@
                     </div>
                 </div>
             </div>
+
+            <!-- NUEVO: Reporte de Ausencias -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="showReport('absences')">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Reporte de Ausencias</h3>
+                        <p class="text-sm text-gray-500">Faltas de docentes</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Report Content Area -->
@@ -243,14 +258,41 @@ function renderReport(type, data) {
         case 'general-stats':
             html = renderGeneralStatsReport(data);
             break;
+        case 'absences':
+            html = renderAbsencesReport(data);
+            break;
     }
     
     dataDiv.innerHTML = html;
+    
+    // Renderizar gráficos después de insertar el HTML
+    setTimeout(() => {
+        if (type === 'teacher-workload') {
+            renderWorkloadChart(data);
+        } else if (type === 'teacher-attendance') {
+            renderAttendanceChart(data);
+        } else if (type === 'group-attendance') {
+            renderGroupAttendanceChart(data);
+        } else if (type === 'general-stats') {
+            renderGeneralStatsCharts(data);
+        } else if (type === 'absences') {
+            renderAbsencesChart(data);
+        }
+    }, 100);
 }
 
 
 function renderWorkloadReport(data) {
     return `
+        <!-- Gráfico de Carga Horaria -->
+        <div class="mb-8 bg-gray-50 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 Distribución de Carga Horaria</h3>
+            <div class="bg-white p-4 rounded-lg">
+                <canvas id="workloadChart" height="80"></canvas>
+            </div>
+        </div>
+
+        <!-- Tabla de Datos -->
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50 border-b">
@@ -278,8 +320,76 @@ function renderWorkloadReport(data) {
     `;
 }
 
+// Función para renderizar el gráfico de carga horaria
+function renderWorkloadChart(data) {
+    const ctx = document.getElementById('workloadChart');
+    if (!ctx) return;
+    
+    // Destruir gráfico anterior si existe
+    if (window.workloadChartInstance) {
+        window.workloadChartInstance.destroy();
+    }
+    
+    const labels = data.map(d => d.teacher_name);
+    const hours = data.map(d => parseFloat(d.total_hours || 0));
+    
+    window.workloadChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Horas Totales',
+                data: hours,
+                backgroundColor: '#881F34',
+                borderColor: '#6d1829',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' horas';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Horas'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Docentes'
+                    }
+                }
+            }
+        }
+    });
+}
+
 function renderTeacherAttendanceReport(data) {
     return `
+        <!-- Gráfico de Asistencia -->
+        <div class="mb-8 bg-gray-50 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">📈 Tendencia de Asistencia</h3>
+            <div class="bg-white p-4 rounded-lg">
+                <canvas id="attendanceChart" height="80"></canvas>
+            </div>
+        </div>
+
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50 border-b">
@@ -418,9 +528,344 @@ function renderGeneralStatsReport(data) {
     `;
 }
 
+// Función para renderizar reporte de ausencias
+function renderAbsencesReport(data) {
+    return `
+        <!-- Gráfico de Ausencias -->
+        <div class="mb-8 bg-gray-50 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">📊 Ausencias por Docente</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-4 rounded-lg">
+                    <canvas id="absencesBarChart" height="200"></canvas>
+                </div>
+                <div class="bg-white p-4 rounded-lg">
+                    <canvas id="absencesPieChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas Rápidas -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="text-sm text-red-600 font-medium">Total Ausencias</div>
+                <div class="text-2xl font-bold text-red-700">${data.reduce((sum, d) => sum + (d.absences || 0), 0)}</div>
+            </div>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="text-sm text-yellow-600 font-medium">Docentes con Ausencias</div>
+                <div class="text-2xl font-bold text-yellow-700">${data.filter(d => d.absences > 0).length}</div>
+            </div>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="text-sm text-green-600 font-medium">Asistencias Totales</div>
+                <div class="text-2xl font-bold text-green-700">${data.reduce((sum, d) => sum + (d.attendances || 0), 0)}</div>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="text-sm text-blue-600 font-medium">Promedio Asistencia</div>
+                <div class="text-2xl font-bold text-blue-700">${(data.reduce((sum, d) => sum + (d.attendance_rate || 0), 0) / data.length).toFixed(1)}%</div>
+            </div>
+        </div>
+
+        <!-- Tabla de Ausencias -->
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Docente</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Asistencias</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Ausencias</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Clases</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">% Asistencia</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    ${data.map(row => {
+                        const rate = row.attendance_rate || 0;
+                        const statusColor = rate >= 90 ? 'green' : rate >= 75 ? 'yellow' : 'red';
+                        const statusText = rate >= 90 ? 'Excelente' : rate >= 75 ? 'Bueno' : 'Crítico';
+                        return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium">${row.teacher_name}</td>
+                            <td class="px-6 py-4 text-center text-green-600 font-semibold">${row.attendances || 0}</td>
+                            <td class="px-6 py-4 text-center text-red-600 font-semibold">${row.absences || 0}</td>
+                            <td class="px-6 py-4 text-center">${row.total_classes || 0}</td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <div class="w-16 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-${statusColor}-600 h-2 rounded-full" style="width: ${rate}%"></div>
+                                    </div>
+                                    <span class="font-semibold">${rate.toFixed(1)}%</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="px-3 py-1 bg-${statusColor}-100 text-${statusColor}-800 rounded-full text-xs font-medium">
+                                    ${statusText}
+                                </span>
+                            </td>
+                        </tr>
+                    `}).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// Función para renderizar gráficos de ausencias
+function renderAbsencesChart(data) {
+    // Gráfico de barras
+    const barCtx = document.getElementById('absencesBarChart');
+    if (barCtx) {
+        if (window.absencesBarChartInstance) {
+            window.absencesBarChartInstance.destroy();
+        }
+        
+        window.absencesBarChartInstance = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.teacher_name),
+                datasets: [
+                    {
+                        label: 'Asistencias',
+                        data: data.map(d => d.attendances || 0),
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Ausencias',
+                        data: data.map(d => d.absences || 0),
+                        backgroundColor: '#ef4444',
+                        borderColor: '#dc2626',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Asistencias vs Ausencias'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Cantidad'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Gráfico de pastel
+    const pieCtx = document.getElementById('absencesPieChart');
+    if (pieCtx) {
+        if (window.absencesPieChartInstance) {
+            window.absencesPieChartInstance.destroy();
+        }
+        
+        const totalAttendances = data.reduce((sum, d) => sum + (d.attendances || 0), 0);
+        const totalAbsences = data.reduce((sum, d) => sum + (d.absences || 0), 0);
+        
+        window.absencesPieChartInstance = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Asistencias', 'Ausencias'],
+                datasets: [{
+                    data: [totalAttendances, totalAbsences],
+                    backgroundColor: ['#10b981', '#ef4444'],
+                    borderColor: ['#059669', '#dc2626'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribución Total'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = totalAttendances + totalAbsences;
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Función para renderizar gráfico de asistencia de docentes
+function renderAttendanceChart(data) {
+    const ctx = document.getElementById('attendanceChart');
+    if (!ctx) return;
+    
+    if (window.attendanceChartInstance) {
+        window.attendanceChartInstance.destroy();
+    }
+    
+    window.attendanceChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.teacher_name),
+            datasets: [{
+                label: '% Asistencia',
+                data: data.map(d => d.attendance_rate || 0),
+                borderColor: '#881F34',
+                backgroundColor: 'rgba(136, 31, 52, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Porcentaje (%)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Función para renderizar gráfico de asistencia por grupo
+function renderGroupAttendanceChart(data) {
+    const ctx = document.getElementById('groupAttendanceChart');
+    if (!ctx) return;
+    
+    if (window.groupAttendanceChartInstance) {
+        window.groupAttendanceChartInstance.destroy();
+    }
+    
+    window.groupAttendanceChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(d => d.group_name),
+            datasets: [{
+                label: 'Estudiantes Presentes',
+                data: data.map(d => d.present_count || 0),
+                backgroundColor: '#10b981',
+                borderColor: '#059669',
+                borderWidth: 1
+            }, {
+                label: 'Estudiantes Ausentes',
+                data: data.map(d => d.absent_count || 0),
+                backgroundColor: '#ef4444',
+                borderColor: '#dc2626',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Cantidad de Estudiantes'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Función para renderizar gráficos de estadísticas generales
+function renderGeneralStatsCharts(data) {
+    // Gráfico de distribución de recursos
+    const ctx1 = document.getElementById('resourcesChart');
+    if (ctx1) {
+        if (window.resourcesChartInstance) {
+            window.resourcesChartInstance.destroy();
+        }
+        
+        window.resourcesChartInstance = new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: ['Docentes', 'Estudiantes', 'Materias', 'Aulas', 'Grupos'],
+                datasets: [{
+                    data: [
+                        data.total_teachers || 0,
+                        data.total_students || 0,
+                        data.total_subjects || 0,
+                        data.total_rooms || 0,
+                        data.total_groups || 0
+                    ],
+                    backgroundColor: [
+                        '#881F34',
+                        '#10b981',
+                        '#3b82f6',
+                        '#f59e0b',
+                        '#8b5cf6'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribución de Recursos'
+                    }
+                }
+            }
+        });
+    }
+}
+
 function closeReport() {
     document.getElementById('reportContent').classList.add('hidden');
     currentReport = null;
+    
+    // Destruir todos los gráficos
+    if (window.workloadChartInstance) window.workloadChartInstance.destroy();
+    if (window.attendanceChartInstance) window.attendanceChartInstance.destroy();
+    if (window.groupAttendanceChartInstance) window.groupAttendanceChartInstance.destroy();
+    if (window.resourcesChartInstance) window.resourcesChartInstance.destroy();
+    if (window.absencesBarChartInstance) window.absencesBarChartInstance.destroy();
+    if (window.absencesPieChartInstance) window.absencesPieChartInstance.destroy();
 }
 
 function exportReport(format) {

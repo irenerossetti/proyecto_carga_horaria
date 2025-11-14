@@ -95,10 +95,11 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'prefer',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
             // Disable prepared statements to prevent "cached plan must not change result type" errors
             'options' => [
-                PDO::ATTR_EMULATE_PREPARES => true,
+                \PDO::ATTR_TIMEOUT => env('DB_STATEMENT_TIMEOUT', 30),
+                \PDO::ATTR_EMULATE_PREPARES => env('DB_PREPARED_STATEMENTS', false) ? false : true,
             ],
         ],
 

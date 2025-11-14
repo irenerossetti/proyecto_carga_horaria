@@ -143,7 +143,16 @@ class ImportController extends Controller
             }
         }
 
-        return response()->json(['created' => $created, 'updated' => $updated, 'errors' => $errors]);
+        return response()->json([
+            'success' => true,
+            'message' => "Importación completada: {$created} creados, {$updated} actualizados",
+            'created' => $created,
+            'updated' => $updated,
+            'success_count' => $created + $updated,
+            'error_count' => count($errors),
+            'total_count' => count($rows),
+            'errors' => $errors
+        ]);
     }
 
     protected function parseCsv(string $path): array
@@ -151,12 +160,23 @@ class ImportController extends Controller
         $rows = [];
         if (! file_exists($path)) return $rows;
 
+        // Detectar y convertir codificación a UTF-8
+        $content = file_get_contents($path);
+        $encoding = mb_detect_encoding($content, ['UTF-8', 'ISO-8859-1', 'Windows-1252'], true);
+        
+        if ($encoding && $encoding !== 'UTF-8') {
+            $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+            file_put_contents($path, $content);
+        }
+
         if (($handle = fopen($path, 'r')) !== false) {
             $headers = null;
             while (($data = fgetcsv($handle, 0, ',')) !== false) {
                 if (! $headers) {
                     // normalize headers
                     $headers = array_map(function ($h) {
+                        // Convertir a UTF-8 si es necesario
+                        $h = mb_convert_encoding($h, 'UTF-8', 'auto');
                         return Str::of($h)->trim()->lower()->replace(' ', '_')->__toString();
                     }, $data);
                     continue;
@@ -164,7 +184,8 @@ class ImportController extends Controller
                 $row = [];
                 foreach ($data as $i => $cell) {
                     $key = $headers[$i] ?? 'col_'.$i;
-                    $row[$key] = $cell;
+                    // Convertir cada celda a UTF-8
+                    $row[$key] = mb_convert_encoding($cell, 'UTF-8', 'auto');
                 }
                 $rows[] = $row;
             }
@@ -188,20 +209,35 @@ class ImportController extends Controller
             $headers = [];
             for ($col = 1; $col <= $highestColumnIndex; $col++) {
                 $val = $sheet->getCellByColumnAndRow($col, 1)->getValue();
+                // Asegurar UTF-8 en encabezados
+                $val = mb_convert_encoding((string)$val, 'UTF-8', 'auto');
                 $headers[] = (string)\Illuminate\Support\Str::of($val)->trim()->lower()->replace(' ', '_');
             }
 
             for ($row = 2; $row <= $highestRow; $row++) {
                 $item = [];
+                $hasData = false;
                 for ($col = 1; $col <= $highestColumnIndex; $col++) {
                     $key = $headers[$col - 1] ?? 'col_'.($col-1);
                     $cell = $sheet->getCellByColumnAndRow($col, $row)->getValue();
+                    
+                    // Convertir a string y asegurar UTF-8
+                    if ($cell !== null) {
+                        $cell = mb_convert_encoding((string)$cell, 'UTF-8', 'auto');
+                        $hasData = true;
+                    }
+                    
                     $item[$key] = $cell;
                 }
-                $rows[] = $item;
+                
+                // Solo agregar filas que tengan datos
+                if ($hasData) {
+                    $rows[] = $item;
+                }
             }
         } catch (\Throwable $e) {
-            // Graceful fallback: return empty and let caller handle
+            // Log error for debugging
+            \Log::error('Error parsing Excel: ' . $e->getMessage());
         }
         return $rows;
     }

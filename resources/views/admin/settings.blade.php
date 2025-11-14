@@ -728,9 +728,12 @@ document.getElementById('auditoriumForm').addEventListener('submit', (e) => {
     renderAuditoriumCalendar();
 });
 
-// Load initial data
-loadRoles();
-renderAuditoriumCalendar();
+// Load initial data when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Cargando configuración del sistema...');
+    loadRoles();
+    renderAuditoriumCalendar();
+});
 </script>
 
 </body>
