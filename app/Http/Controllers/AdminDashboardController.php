@@ -58,15 +58,22 @@ class AdminDashboardController extends Controller
 
         // Contar aulas libres hoy (sin horarios asignados en este momento)
         $now = now();
-        $currentDay = $now->dayOfWeek; // 0=Domingo, 1=Lunes, etc.
+        $currentDayNum = $now->dayOfWeek; // 0=Domingo, 1=Lunes, etc.
         $currentTime = $now->format('H:i:s');
         
-        $busyRooms = Schedule::where('day_of_week', $currentDay)
-            ->where('start_time', '<=', $currentTime)
-            ->where('end_time', '>=', $currentTime)
-            ->whereNotNull('room_id')
-            ->distinct('room_id')
-            ->count('room_id');
+        // Mapeo de días - debe estar ANTES de usarlo
+        $daysMap = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        $currentDayName = $daysMap[$currentDayNum] ?? null;
+        
+        $busyRooms = 0;
+        if ($currentDayName) {
+            $busyRooms = Schedule::where('day_of_week', $currentDayName)
+                ->where('start_time', '<=', $currentTime)
+                ->where('end_time', '>=', $currentTime)
+                ->whereNotNull('room_id')
+                ->distinct('room_id')
+                ->count('room_id');
+        }
             
         $freeRoomsToday = max(0, $totalRooms - $busyRooms);
         
@@ -82,10 +89,6 @@ class AdminDashboardController extends Controller
         // Reservas activas (tabla NO EXISTE, retornar 0)
         $activeReservations = 0;
 
-        // Mapeo de días
-        $daysMap = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
-        $currentDayName = $daysMap[$currentDay] ?? null;
-
         // Clases en curso y próximas (solo si hay horarios y día válido)
         $upcomingSchedules = collect([]);
         $currentClass = null;
@@ -94,7 +97,7 @@ class AdminDashboardController extends Controller
             try {
                 $upcomingSchedules = Schedule::where('day_of_week', $currentDayName)
                     ->where('start_time', '>=', $currentTime)
-                    ->with(['assignment.teacher.user', 'room'])
+                    ->with(['teacher.user', 'room', 'group'])
                     ->orderBy('start_time', 'asc')
                     ->take(3)
                     ->get();
@@ -103,7 +106,7 @@ class AdminDashboardController extends Controller
                 $currentClass = Schedule::where('day_of_week', $currentDayName)
                     ->where('start_time', '<=', $currentTime)
                     ->where('end_time', '>=', $currentTime)
-                    ->with(['assignment.teacher.user', 'room'])
+                    ->with(['teacher.user', 'room', 'group'])
                     ->first();
             } catch (\Exception $e) {
                 \Log::warning('Error al obtener horarios: ' . $e->getMessage());
