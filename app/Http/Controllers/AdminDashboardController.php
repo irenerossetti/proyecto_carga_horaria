@@ -45,33 +45,54 @@ class AdminDashboardController extends Controller
      */
     private function getDashboardData(): array
     {
-        $totalTeachers = Teacher::count();
-        $totalRooms = Room::count();
+        try {
+            $totalTeachers = Teacher::count();
+        } catch (\Exception $e) {
+            $totalTeachers = 0;
+        }
+        
+        try {
+            $totalRooms = Room::count();
+        } catch (\Exception $e) {
+            $totalRooms = 0;
+        }
         
         // Contar materias - TABLA NO EXISTE EN LA BD
         $totalSubjects = 0;
         
         // Contar estudiantes
-        $totalStudents = User::whereHas('roles', function($q) {
-            $q->where('name', 'ESTUDIANTE');
-        })->count();
+        try {
+            $totalStudents = User::whereHas('roles', function($q) {
+                $q->where('name', 'ESTUDIANTE');
+            })->count();
+        } catch (\Exception $e) {
+            $totalStudents = 0;
+        }
 
         // Contar aulas libres hoy (sin horarios asignados en este momento)
         $now = now();
         $currentDay = $now->dayOfWeek; // 0=Domingo, 1=Lunes, etc.
         $currentTime = $now->format('H:i:s');
         
-        $busyRooms = Schedule::where('day_of_week', $currentDay)
-            ->where('start_time', '<=', $currentTime)
-            ->where('end_time', '>=', $currentTime)
-            ->whereNotNull('room_id')
-            ->distinct('room_id')
-            ->count('room_id');
+        try {
+            $busyRooms = Schedule::where('day_of_week', $currentDay)
+                ->where('start_time', '<=', $currentTime)
+                ->where('end_time', '>=', $currentTime)
+                ->whereNotNull('room_id')
+                ->distinct('room_id')
+                ->count('room_id');
+        } catch (\Exception $e) {
+            $busyRooms = 0;
+        }
             
         $freeRoomsToday = max(0, $totalRooms - $busyRooms);
         
         // Horarios totales
-        $totalSchedules = Schedule::count();
+        try {
+            $totalSchedules = Schedule::count();
+        } catch (\Exception $e) {
+            $totalSchedules = 0;
+        }
         
         // Asistencias de hoy (tabla NO EXISTE, retornar 0)
         $todayAttendances = 0;
@@ -94,7 +115,6 @@ class AdminDashboardController extends Controller
             try {
                 $upcomingSchedules = Schedule::where('day_of_week', $currentDayName)
                     ->where('start_time', '>=', $currentTime)
-                    ->with(['assignment.teacher.user', 'room'])
                     ->orderBy('start_time', 'asc')
                     ->take(3)
                     ->get();
@@ -103,7 +123,6 @@ class AdminDashboardController extends Controller
                 $currentClass = Schedule::where('day_of_week', $currentDayName)
                     ->where('start_time', '<=', $currentTime)
                     ->where('end_time', '>=', $currentTime)
-                    ->with(['assignment.teacher.user', 'room'])
                     ->first();
             } catch (\Exception $e) {
                 \Log::warning('Error al obtener horarios: ' . $e->getMessage());

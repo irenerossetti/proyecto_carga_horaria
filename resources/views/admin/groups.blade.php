@@ -174,15 +174,20 @@
             
             <div class="grid grid-cols-2 gap-6">
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Código del Grupo *</label>
+                    <input type="text" id="groupCode" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent" placeholder="Ej: INF-101-A">
+                </div>
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Grupo *</label>
                     <input type="text" id="groupName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent" placeholder="Ej: Grupo A">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Materia *</label>
-                    <select id="groupSubject" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent">
-                        <option value="">Seleccionar materia</option>
-                    </select>
-                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Materia *</label>
+                <select id="groupSubject" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent">
+                    <option value="">Seleccionar materia</option>
+                </select>
             </div>
             
             <div class="grid grid-cols-3 gap-6">
@@ -267,9 +272,9 @@ async function loadGroups() {
         console.error('Error:', error);
         // Datos de prueba
         allGroups = [
-            { id: 1, name: 'Grupo A', subject_id: 1, subject_name: 'Introducción a la Programación', capacity: 30, enrolled_students: 25, status: 'active', description: 'Grupo matutino', schedule: 'Lun-Mie-Vie 08:00-10:00', room_id: 1, room_name: 'Aula 101' },
-            { id: 2, name: 'Grupo B', subject_id: 1, subject_name: 'Introducción a la Programación', capacity: 30, enrolled_students: 28, status: 'active', description: 'Grupo vespertino', schedule: 'Lun-Mie-Vie 14:00-16:00', room_id: 2, room_name: 'Aula 102' },
-            { id: 3, name: 'Grupo A', subject_id: 2, subject_name: 'Cálculo I', capacity: 35, enrolled_students: 32, status: 'active', description: 'Grupo único', schedule: 'Mar-Jue 10:00-12:00', room_id: 3, room_name: 'Aula 201' },
+            { id: 1, code: 'INF-101-A', name: 'Grupo A', subject_id: 1, subject_name: 'Introducción a la Programación', capacity: 30, enrolled_students: 25, status: 'active', description: 'Grupo matutino', schedule: 'Lun-Mie-Vie 08:00-10:00', room_id: 1, room_name: 'Aula 101' },
+            { id: 2, code: 'INF-101-B', name: 'Grupo B', subject_id: 1, subject_name: 'Introducción a la Programación', capacity: 30, enrolled_students: 28, status: 'active', description: 'Grupo vespertino', schedule: 'Lun-Mie-Vie 14:00-16:00', room_id: 2, room_name: 'Aula 102' },
+            { id: 3, code: 'MAT-101-A', name: 'Grupo A', subject_id: 2, subject_name: 'Cálculo I', capacity: 35, enrolled_students: 32, status: 'active', description: 'Grupo único', schedule: 'Mar-Jue 10:00-12:00', room_id: 3, room_name: 'Aula 201' },
         ];
         filteredGroups = [...allGroups];
         renderGroups();
@@ -445,6 +450,7 @@ function editGroup(id) {
     
     document.getElementById('groupModalTitle').textContent = 'Editar Grupo';
     document.getElementById('groupId').value = group.id;
+    document.getElementById('groupCode').value = group.code || '';
     document.getElementById('groupName').value = group.name;
     document.getElementById('groupSubject').value = group.subject_id;
     document.getElementById('groupCapacity').value = group.capacity;
@@ -490,6 +496,7 @@ document.getElementById('groupForm').addEventListener('submit', async (e) => {
     
     const groupId = document.getElementById('groupId').value;
     const data = {
+        code: document.getElementById('groupCode').value,
         name: document.getElementById('groupName').value,
         subject_id: parseInt(document.getElementById('groupSubject').value),
         capacity: parseInt(document.getElementById('groupCapacity').value),

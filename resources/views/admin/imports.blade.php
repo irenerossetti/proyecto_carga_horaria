@@ -181,7 +181,7 @@
                         <div class="flex text-sm text-gray-600">
                             <label for="importFile" class="relative cursor-pointer bg-white rounded-md font-medium text-brand-primary hover:text-brand-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-primary">
                                 <span>Subir archivo</span>
-                                <input id="importFile" name="file" type="file" accept=".xlsx,.xls,.csv" class="sr-only" required>
+                                <input id="importFile" name="file" type="file" accept=".xlsx,.xls,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" class="sr-only" required>
                             </label>
                             <p class="pl-1">o arrastra y suelta</p>
                         </div>
@@ -372,6 +372,8 @@ function downloadTemplate(type) {
 
 function openImportModal(type) {
     currentImportType = type;
+    console.log('Abriendo modal de importación para:', type);
+    
     const titles = {
         teachers: 'Importar Docentes',
         subjects: 'Importar Materias',
@@ -380,6 +382,10 @@ function openImportModal(type) {
     
     document.getElementById('importModalTitle').textContent = titles[type];
     document.getElementById('importType').value = type;
+    
+    // Resetear el formulario
+    document.getElementById('importForm').reset();
+    clearFile();
     
     // Mostrar instrucciones específicas
     const instructionsList = document.getElementById('instructionsList');
@@ -404,30 +410,46 @@ function clearFile() {
 }
 
 // File selection handler
-document.getElementById('importFile').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        document.getElementById('fileName').textContent = file.name;
-        document.getElementById('selectedFile').classList.remove('hidden');
-        
-        // Show/hide CSV options based on file type
-        const csvOptions = document.getElementById('csvSeparator').closest('.grid');
-        if (file.name.toLowerCase().endsWith('.csv')) {
-            csvOptions.style.display = 'grid';
-        } else {
-            csvOptions.style.display = 'none';
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    const importFileInput = document.getElementById('importFile');
+    if (importFileInput) {
+        importFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                console.log('Archivo seleccionado:', file.name);
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('selectedFile').classList.remove('hidden');
+                
+                // Show/hide CSV options based on file type
+                const csvOptions = document.getElementById('csvSeparator').closest('.grid');
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    csvOptions.style.display = 'grid';
+                } else {
+                    csvOptions.style.display = 'none';
+                }
+            }
+        });
     }
 });
 
 async function processImport() {
     const fileInput = document.getElementById('importFile');
+    
+    if (!fileInput) {
+        console.error('Input de archivo no encontrado');
+        showNotification('❌ Error: Input de archivo no encontrado', 'error');
+        return;
+    }
+    
     const file = fileInput.files[0];
     
     if (!file) {
+        console.log('No hay archivo seleccionado');
         showNotification('❌ Por favor selecciona un archivo', 'error');
         return;
     }
+    
+    console.log('Procesando archivo:', file.name, 'Tipo:', currentImportType);
     
     // Show progress modal
     closeImportModal();

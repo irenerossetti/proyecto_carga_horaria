@@ -310,6 +310,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('reports/available-rooms', [ReportController::class, 'availableRooms']);
         Route::get('reports/group-attendance', [ReportController::class, 'groupAttendance']);
         Route::get('reports/general-stats', [ReportController::class, 'generalStats']);
+        Route::get('reports/absences', [ReportController::class, 'absences']);
         Route::post('reports/export-pdf', [ReportController::class, 'exportPdf']);
         Route::post('reports/export-excel', [ReportController::class, 'exportExcel']);
 

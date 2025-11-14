@@ -7,13 +7,20 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
+     * Disable transactions for this migration
+     */
+    public $withinTransaction = false;
+    
+    /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('activity_logs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+        if (!Schema::hasTable('activity_logs')) {
+            Schema::create('activity_logs', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id')->nullable();
+                $table->index('user_id');
             $table->string('user_name')->nullable(); // Guardar nombre por si se elimina el usuario
             $table->string('user_email')->nullable();
             $table->string('user_role')->nullable();
@@ -29,12 +36,12 @@ return new class extends Migration
             $table->timestamp('created_at');
             
             // Índices para búsquedas rápidas
-            $table->index('user_id');
             $table->index('action');
             $table->index('module');
             $table->index('created_at');
             $table->index('ip_address');
-        });
+            });
+        }
     }
 
     /**
@@ -42,6 +49,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('activity_logs');
+        if (Schema::hasTable('activity_logs')) {
+            Schema::dropIfExists('activity_logs');
+        }
     }
 };
